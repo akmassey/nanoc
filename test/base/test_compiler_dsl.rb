@@ -1,10 +1,8 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::CompilerDSLTest < MiniTest::Unit::TestCase
 
-class Nanoc3::CompilerDSLTest < MiniTest::Unit::TestCase
-
-  include Nanoc3::TestHelpers
+  include Nanoc::TestHelpers
 
   def test_compile
     # TODO implement
@@ -18,36 +16,117 @@ class Nanoc3::CompilerDSLTest < MiniTest::Unit::TestCase
     # TODO implement
   end
 
-  def test_passthrough
+  def test_include_rules
     # Create site
-    Nanoc3::CLI::Base.new.run([ 'create_site', 'bar' ])
-    FileUtils.cd('bar') do
+    Nanoc::CLI.run %w( create_site with_bonus_rules )
+    FileUtils.cd('with_bonus_rules') do
       # Create rep
-      item = Nanoc3::Item.new('foo', { :extension => 'bar' }, '/foo/')
-      rep = Nanoc3::ItemRep.new(item, :default)
+      item = Nanoc::Item.new('foo', { :extension => 'bar' }, '/foo/')
+      rep  = Nanoc::ItemRep.new(item, :default)
+
+      # Create a bonus rules file
+      File.open('more_rules.rb', 'w') { |io| io.write "passthrough '/foo/'" }
 
       # Create other necessary stuff
-      site = Nanoc3::Site.new('.')
+      site = Nanoc::Site.new('.')
       site.items << item
-      compiler = site.compiler
-      dsl = site.compiler.dsl
+      dsl = site.compiler.rules_collection.dsl
 
-      # Create rule
-      dsl.passthrough '/foo/'
+      # Include rules
+      dsl.include_rules 'more_rules'
 
-      # Route and compile
-      path = compiler.routing_rule_for(rep).apply_to(rep, :compiler => compiler)
-      compiler.send :compile_rep, rep
+      # Check that the rule made it into the collection
+      refute_nil site.compiler.rules_collection.routing_rule_for(rep)
+    end
+  end
 
-      # Check result
-      assert_equal 'foo', rep.compiled_content
-      assert_equal '/foo.bar', path
+  def test_passthrough
+    with_site do
+      # Create rules
+      File.open('Rules', 'w') do |io|
+        io.write <<EOS
+passthrough "/robots/"
+        
+compile '*' do ; end
+route '*' do ; item.identifier.chop + '-xyz' + item[:extension] ; end
+EOS
+      end
+
+      # Create items
+      assert Dir['content/*'].empty?
+      File.open('content/robots.txt', 'w') do |io|
+        io.write "Hello I am robots"
+      end
+
+      # Compile
+      site = Nanoc::Site.new('.')
+      site.compile
+
+      # Check paths
+      assert_equal [ 'output/robots.txt' ], Dir['output/*']
+    end
+  end
+
+  def test_passthrough_no_ext
+    with_site do
+      # Create rules
+      File.open('Rules', 'w') do |io|
+        io.write <<EOS
+passthrough "/foo/"
+EOS
+      end
+
+      # Create items
+      assert Dir['content/*'].empty?
+      File.open('content/foo', 'w') do |io|
+        io.write "Hello I am foo"
+      end
+
+      # Compile
+      site = Nanoc::Site.new('.')
+      site.compile
+
+      # Check paths
+      assert_equal [ 'output/foo' ], Dir['output/*']
+    end
+  end
+
+  def test_passthrough_priority
+    with_site do
+      # Create rules
+      File.open('Rules', 'w') do |io|
+        io.write <<EOS
+compile '*' do
+  filter :erb
+end
+
+route '*' do
+  item.identifier + 'index.html'
+end
+
+passthrough "/foo/"
+EOS
+      end
+
+      # Create items
+      assert Dir['content/*'].empty?
+      File.open('content/foo.txt', 'w') do |io|
+        io.write "Hello I am <%= 'foo' %>"
+      end
+
+      # Compile
+      site = Nanoc::Site.new('.')
+      site.compile
+
+      # Check paths
+      assert_equal [ 'output/foo' ],            Dir['output/*']
+      assert_equal [ 'output/foo/index.html' ], Dir['output/foo/*']
     end
   end
 
   def test_identifier_to_regex_without_wildcards
     # Create compiler DSL
-    compiler_dsl = Nanoc3::CompilerDSL.new(nil)
+    compiler_dsl = Nanoc::CompilerDSL.new(nil, {})
 
     actual   = compiler_dsl.instance_eval { identifier_to_regex('foo') }
     expected = %r{^/foo/$}
@@ -61,7 +140,7 @@ class Nanoc3::CompilerDSLTest < MiniTest::Unit::TestCase
 
   def test_identifier_to_regex_with_one_wildcard
     # Create compiler DSL
-    compiler_dsl = Nanoc3::CompilerDSL.new(nil)
+    compiler_dsl = Nanoc::CompilerDSL.new(nil, {})
 
     actual   = compiler_dsl.instance_eval { identifier_to_regex('foo/*/bar') }
     expected = %r{^/foo/(.*?)/bar/$}
@@ -75,7 +154,7 @@ class Nanoc3::CompilerDSLTest < MiniTest::Unit::TestCase
 
   def test_identifier_to_regex_with_two_wildcards
     # Create compiler DSL
-    compiler_dsl = Nanoc3::CompilerDSL.new(nil)
+    compiler_dsl = Nanoc::CompilerDSL.new(nil, {})
 
     actual   = compiler_dsl.instance_eval { identifier_to_regex('foo/*/bar/*/qux') }
     expected = %r{^/foo/(.*?)/bar/(.*?)/qux/$}
@@ -89,7 +168,7 @@ class Nanoc3::CompilerDSLTest < MiniTest::Unit::TestCase
 
   def test_identifier_to_regex_with_just_one_wildcard
     # Create compiler DSL
-    compiler_dsl = Nanoc3::CompilerDSL.new(nil)
+    compiler_dsl = Nanoc::CompilerDSL.new(nil, {})
 
     actual   = compiler_dsl.instance_eval { identifier_to_regex('*') }
     expected = %r{^/(.*?)$}
@@ -103,7 +182,7 @@ class Nanoc3::CompilerDSLTest < MiniTest::Unit::TestCase
 
   def test_identifier_to_regex_with_root
     # Create compiler DSL
-    compiler_dsl = Nanoc3::CompilerDSL.new(nil)
+    compiler_dsl = Nanoc::CompilerDSL.new(nil, {})
 
     actual   = compiler_dsl.instance_eval { identifier_to_regex('/') }
     expected = %r{^/$}
@@ -117,7 +196,7 @@ class Nanoc3::CompilerDSLTest < MiniTest::Unit::TestCase
 
   def test_identifier_to_regex_with_only_children
     # Create compiler DSL
-    compiler_dsl = Nanoc3::CompilerDSL.new(nil)
+    compiler_dsl = Nanoc::CompilerDSL.new(nil, {})
 
     actual   = compiler_dsl.instance_eval { identifier_to_regex('/foo/*/') }
     expected = %r{^/foo/(.*?)/$}
@@ -131,7 +210,7 @@ class Nanoc3::CompilerDSLTest < MiniTest::Unit::TestCase
 
   def test_identifier_to_regex_with_plus_wildcard
     # Create compiler DSL
-    compiler_dsl = Nanoc3::CompilerDSL.new(nil)
+    compiler_dsl = Nanoc::CompilerDSL.new(nil, {})
 
     actual   = compiler_dsl.instance_eval { identifier_to_regex('/foo/+') }
     expected = %r{^/foo/(.+?)/$}
@@ -146,10 +225,17 @@ class Nanoc3::CompilerDSLTest < MiniTest::Unit::TestCase
   end
 
   def test_dsl_has_no_access_to_compiler
-    compiler_dsl = Nanoc3::CompilerDSL.new(nil)
+    compiler_dsl = Nanoc::CompilerDSL.new(nil, {})
     assert_raises(NameError) do
       compiler_dsl.instance_eval { compiler }
     end
+  end
+
+  def test_config
+    $venetian = 'unsnares'
+    compiler_dsl = Nanoc::CompilerDSL.new(nil, { :venetian => 'snares' })
+    compiler_dsl.instance_eval { $venetian = @config[:venetian] }
+    assert_equal 'snares', $venetian
   end
 
 end

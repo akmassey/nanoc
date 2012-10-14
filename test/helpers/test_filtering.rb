@@ -1,12 +1,10 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::Helpers::FilteringTest < MiniTest::Unit::TestCase
 
-class Nanoc3::Helpers::FilteringTest < MiniTest::Unit::TestCase
+  include Nanoc::TestHelpers
 
-  include Nanoc3::TestHelpers
-
-  include Nanoc3::Helpers::Filtering
+  include Nanoc::Helpers::Filtering
 
   def test_filter_simple
     if_have 'rubypants' do
@@ -65,7 +63,7 @@ class Nanoc3::Helpers::FilteringTest < MiniTest::Unit::TestCase
               "<% end %>\n"
 
     # Evaluate content
-    error = assert_raises(Nanoc3::Errors::UnknownFilter) do
+    error = assert_raises(Nanoc::Errors::UnknownFilter) do
       ::ERB.new(content).result(binding)
     end
   end
@@ -83,7 +81,7 @@ class Nanoc3::Helpers::FilteringTest < MiniTest::Unit::TestCase
 
       # Evaluate content
       result = ::ERB.new(content).result(binding)
-      assert_match(%r{<span class="r">def</span> <span class="fu">some_function</span>}, result)
+      assert_match(%r{<span class="keyword">def</span> <span class="function">some_function</span>}, result)
     end
   end
 
@@ -103,6 +101,26 @@ class Nanoc3::Helpers::FilteringTest < MiniTest::Unit::TestCase
       result = ::Haml::Engine.new(content).render(binding)
       assert_match(%r{^<p>Foo.</p>\s*abcxyz\s*<p>Bar.</p>$}, result)
     end
+  end
+
+  def test_notifications
+    notifications = Set.new
+    Nanoc::NotificationCenter.on(:filtering_started) { notifications << :filtering_started }
+    Nanoc::NotificationCenter.on(:filtering_ended)   { notifications << :filtering_ended   }
+
+    # Build content to be evaluated
+    content = "<% filter :erb do %>\n" +
+              "   ... stuff ...\n" +
+              "<% end %>\n"
+
+    # Mock item and rep
+    @item_rep = mock
+    @item_rep.expects(:assigns).returns({})
+
+    ::ERB.new(content).result(binding)
+
+    assert notifications.include?(:filtering_started)
+    assert notifications.include?(:filtering_ended)
   end
 
 end

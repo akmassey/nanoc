@@ -1,18 +1,18 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::Filters::RDocTest < MiniTest::Unit::TestCase
 
-class Nanoc3::Filters::RDocTest < MiniTest::Unit::TestCase
-
-  include Nanoc3::TestHelpers
+  include Nanoc::TestHelpers
 
   def test_filter
-    # Get filter
-    filter = ::Nanoc3::Filters::RDoc.new
+    if_have 'rdoc' do
+      # Get filter
+      filter = ::Nanoc::Filters::RDoc.new
 
-    # Run filter
-    result = filter.run("= Foo")
-    assert_equal("<h1>Foo</h1>\n", result)
+      # Run filter
+      result = filter.run("= Foo")
+      assert_match(%r{<h1( id="label-Foo")?>Foo</h1>\Z}, result)
+    end
   end
 
 end

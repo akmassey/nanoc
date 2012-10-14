@@ -1,12 +1,10 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::Helpers::BreadcrumbsTest < MiniTest::Unit::TestCase
 
-class Nanoc3::Helpers::BreadcrumbsTest < MiniTest::Unit::TestCase
+  include Nanoc::TestHelpers
 
-  include Nanoc3::TestHelpers
-
-  include Nanoc3::Helpers::Breadcrumbs
+  include Nanoc::Helpers::Breadcrumbs
 
   def test_breadcrumbs_trail_at_root
     # Mock item

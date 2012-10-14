@@ -1,12 +1,12 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::CLI::Commands::HelpTest < MiniTest::Unit::TestCase
 
-class Nanoc3::CLI::Commands::HelpTest < MiniTest::Unit::TestCase
+  include Nanoc::TestHelpers
 
-  include Nanoc3::TestHelpers
-
-  def test_stub
+  def test_run
+    Nanoc::CLI.run %w( help )
+    Nanoc::CLI.run %w( help co )
   end
 
 end

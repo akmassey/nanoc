@@ -1,10 +1,8 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::Tasks::CleanTest < MiniTest::Unit::TestCase
 
-class Nanoc3::Tasks::CleanTest < MiniTest::Unit::TestCase
-
-  include Nanoc3::TestHelpers
+  include Nanoc::TestHelpers
 
   def test_simple
     if_have 'w3c_validators' do
@@ -29,7 +27,7 @@ class Nanoc3::Tasks::CleanTest < MiniTest::Unit::TestCase
       site.expects(:items).returns(items)
 
       # Create clean task
-      clean = ::Nanoc3::Tasks::Clean.new(site)
+      clean = ::Nanoc::Tasks::Clean.new(site)
 
       # Run
       clean.run
@@ -59,7 +57,7 @@ class Nanoc3::Tasks::CleanTest < MiniTest::Unit::TestCase
       site.expects(:items).returns([ item ])
 
       # Create clean task
-      clean = ::Nanoc3::Tasks::Clean.new(site)
+      clean = ::Nanoc::Tasks::Clean.new(site)
 
       # Run
       clean.run

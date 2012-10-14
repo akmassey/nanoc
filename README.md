@@ -16,9 +16,13 @@ the following places will help you out:
 * The [discussion group](http://groups.google.com/group/nanoc)
 * The [IRC channel](irc://chat.freenode.net/#nanoc)
 
+## Versioning
+
+nanoc uses [Semantic Versioning](semver.org).
+
 ## Source Code Documentation
 
-The source code is located in `lib/nanoc3` and is structured in a few
+The source code is located in `lib/nanoc` and is structured in a few
 directories:
 
 * `base` contains the bare essentials necessary for nanoc to function
@@ -26,26 +30,28 @@ directories:
   * `result_data` contains the compiled content
   * `compilation` contains the compilation functionality
 * `cli` contains the commandline interface
-* `data_sources` contains the standard data sources ({Nanoc3::DataSource}
+* `data_sources` contains the standard data sources ({Nanoc::DataSource}
   subclasses), such as the filesystem data source
-* `helpers` contains helpers, which provide functionality some sites
-  may find useful, such as the blogging and tagging helpers
 * `extra` contains stuff that is not needed by nanoc itself, but which may
   be used by helpers, data sources, filters or VCSes.
-* `filters` contains the standard filters ({Nanoc3::Filter} subclasses)
-  such as ERB, Markdown, Haml, ...
+* `filters` contains the standard filters ({Nanoc::Filter} subclasses)
+  such as ERB, Markdown, Haml, …
+* `helpers` contains helpers, which provide functionality some sites
+  may find useful, such as the blogging and tagging helpers
+* `tasks` contains rake tasks that perform a variety of functions such as
+  validating HTML and CSS, uploading compiled files, …
 
 The namespaces (modules) are organised like this:
 
-* {Nanoc3} is the namespace for everything nanoc-related (obviously). The
-  classes in `lib/nanoc3/base` are part of this module (not `Nanoc3::Base`)
-* {Nanoc3::CLI} containing everything related to the commandline tool.
-* {Nanoc3::DataSources} contains the data sources
-* {Nanoc3::Helpers} contains the helpers
-* {Nanoc3::Extra} contains useful stuff not needed by nanoc itself
-* {Nanoc3::Filters} contains the (textual) filters
+* {Nanoc} is the namespace for everything nanoc-related (obviously). The
+  classes in `lib/nanoc/base` are part of this module (not `Nanoc::Base`)
+* {Nanoc::CLI} containing everything related to the commandline tool.
+* {Nanoc::DataSources} contains the data sources
+* {Nanoc::Helpers} contains the helpers
+* {Nanoc::Extra} contains useful stuff not needed by nanoc itself
+* {Nanoc::Filters} contains the (textual) filters
 
-The central class in nanoc is {Nanoc3::Site}, so you should start there if
+The central class in nanoc is {Nanoc::Site}, so you should start there if
 you want to explore nanoc from a technical perspective.
 
 ## Dependencies
@@ -54,7 +60,7 @@ nanoc has few dependencies. It is possible to use nanoc programmatically
 without any dependencies at all, but if you want to use nanoc in a proper way,
 you’ll likely need some dependencies:
 
-* The **commandline frontend** depends on `cli`.
+* The **commandline frontend** depends on `cri`.
 * The **autocompiler** depends on `mime-types` and `rack`.
 * Filters and helpers likely have dependencies on their own too.
 
@@ -71,22 +77,44 @@ may be interested in the development dependencies:
 
 * Ben Armston
 * Colin Barrett
+* Bil Bas
 * Dmitry Bilunov
+* Fabian Buch
 * Devon Luke Buchanan
+* Stefan Bühler
+* Dan Callahan
 * Brian Candler
+* Jack Chu
+* Michal Cichra
+* Zaiste de Grengolada
 * Vincent Driessen
 * Chris Eppstein
+* Jeff Forcier
+* Riley Goodside
 * Felix Hanley
+* Justin Hileman
 * Starr Horne
+* Daniel Hofstetter
 * Tuomas Kareinen
+* Matt Keveney
+* Kevin Lynagh
+* Nikhil Marathe
+* Daniel Mendler
 * Ale Muñoz
+* John Nishinaga
 * Nicky Peeters
 * Christian Plessl
 * Šime Ramov
 * Xavier Shay
+* Arnau Siches
 * “Soryu”
 * Eric Sunshine
 * Dennis Sutch
+* Takashi Uchibe
+* Matthias Vallentin
+* Ruben Verborgh
+* Scott Vokes
+* Toon Willems
 
 ## Contact
 

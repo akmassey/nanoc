@@ -1,30 +1,28 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::PluginTest < MiniTest::Unit::TestCase
 
-class Nanoc3::PluginTest < MiniTest::Unit::TestCase
+  include Nanoc::TestHelpers
 
-  include Nanoc3::TestHelpers
-
-  class SampleFilter < Nanoc3::Filter
+  class SampleFilter < Nanoc::Filter
     identifier :_plugin_test_sample_filter
   end
 
   def test_named
     # Find existant filter
-    filter = Nanoc3::Filter.named(:erb)
+    filter = Nanoc::Filter.named(:erb)
     assert(!filter.nil?)
 
     # Find non-existant filter
-    filter = Nanoc3::Filter.named(:lksdaffhdlkashlgkskahf)
+    filter = Nanoc::Filter.named(:lksdaffhdlkashlgkskahf)
     assert(filter.nil?)
   end
 
   def test_register
     SampleFilter.send(:identifier, :_plugin_test_sample_filter)
 
-    registry = Nanoc3::PluginRegistry.instance
-    filter = registry.find(Nanoc3::Filter, :_plugin_test_sample_filter)
+    registry = Nanoc::PluginRegistry.instance
+    filter = registry.find(Nanoc::Filter, :_plugin_test_sample_filter)
 
     refute_nil filter
   end

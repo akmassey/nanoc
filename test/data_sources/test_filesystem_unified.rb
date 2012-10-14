@@ -1,17 +1,15 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::DataSources::FilesystemUnifiedTest < MiniTest::Unit::TestCase
 
-class Nanoc3::DataSources::FilesystemUnifiedTest < MiniTest::Unit::TestCase
-
-  include Nanoc3::TestHelpers
+  include Nanoc::TestHelpers
 
   def new_data_source(params=nil)
     # Mock site
-    site = Nanoc3::Site.new({})
+    site = Nanoc::Site.new({})
 
     # Create data source
-    data_source = Nanoc3::DataSources::FilesystemUnified.new(site, nil, nil, params)
+    data_source = Nanoc::DataSources::FilesystemUnified.new(site, nil, nil, params)
 
     # Done
     data_source
@@ -29,8 +27,8 @@ class Nanoc3::DataSources::FilesystemUnifiedTest < MiniTest::Unit::TestCase
     assert File.file?('foobar/asdf.html')
 
     # Check file content
-    expected = "--- \nfoo: bar\n---\n\ncontent here"
-    assert_equal expected, File.read('foobar/asdf.html')
+    expected = /^--- ?\nfoo: bar\n---\n\ncontent here$/
+    assert_match expected, File.read('foobar/asdf.html')
   end
 
   def test_create_object_at_root
@@ -45,8 +43,8 @@ class Nanoc3::DataSources::FilesystemUnifiedTest < MiniTest::Unit::TestCase
     assert File.file?('foobar/index.html')
 
     # Check file content
-    expected = "--- \nfoo: bar\n---\n\ncontent here"
-    assert_equal expected, File.read('foobar/index.html')
+    expected = /^--- ?\nfoo: bar\n---\n\ncontent here$/
+    assert_match expected, File.read('foobar/index.html')
   end
 
   def test_load_objects
@@ -121,7 +119,7 @@ class Nanoc3::DataSources::FilesystemUnifiedTest < MiniTest::Unit::TestCase
     File.open('foo/stuff.dat', 'w') { |io| io.write("random binary data") }
 
     # Load
-    items = data_source.send(:load_objects, 'foo', 'item', Nanoc3::Item)
+    items = data_source.send(:load_objects, 'foo', 'item', Nanoc::Item)
 
     # Check
     assert_equal 1, items.size
@@ -139,7 +137,7 @@ class Nanoc3::DataSources::FilesystemUnifiedTest < MiniTest::Unit::TestCase
     File.open('foo/stuff.dat', 'w') { |io| io.write("random binary data") }
 
     # Load
-    items = data_source.send(:load_objects, 'foo', 'item', Nanoc3::Layout)
+    items = data_source.send(:load_objects, 'foo', 'item', Nanoc::Layout)
 
     # Check
     assert_equal 1, items.size
@@ -191,78 +189,54 @@ class Nanoc3::DataSources::FilesystemUnifiedTest < MiniTest::Unit::TestCase
   end
 
   def test_identifier_for_filename_with_subfilename_allowing_periods_in_identifiers
-    # Create data source
-    data_source = new_data_source(:allow_periods_in_identifiers => true)
-
-    # Build directory
-    FileUtils.mkdir_p('foo')
-    File.open('foo/bar.yaml',         'w') { |io| io.write('test') }
-    File.open('foo/bar.html',         'w') { |io| io.write('test') }
-    File.open('foo/quxbar.yaml',      'w') { |io| io.write('test') }
-    File.open('foo/quxbar.html',      'w') { |io| io.write('test') }
-    File.open('foo/barqux.yaml',      'w') { |io| io.write('test') }
-    File.open('foo/barqux.html',      'w') { |io| io.write('test') }
-    File.open('foo/quxbarqux.yaml',   'w') { |io| io.write('test') }
-    File.open('foo/quxbarqux.html',   'w') { |io| io.write('test') }
-    File.open('foo/qux.bar.yaml',     'w') { |io| io.write('test') }
-    File.open('foo/qux.bar.html',     'w') { |io| io.write('test') }
-    File.open('foo/bar.qux.yaml',     'w') { |io| io.write('test') }
-    File.open('foo/bar.qux.html',     'w') { |io| io.write('test') }
-    File.open('foo/qux.bar.qux.yaml', 'w') { |io| io.write('test') }
-    File.open('foo/qux.bar.qux.html', 'w') { |io| io.write('test') }
-
-    # Check content filename
-    {
+    expectations = {
       'foo/bar.yaml'         => '/foo/bar/',
       'foo/quxbar.yaml'      => '/foo/quxbar/',
       'foo/barqux.yaml'      => '/foo/barqux/',
       'foo/quxbarqux.yaml'   => '/foo/quxbarqux/',
       'foo/qux.bar.yaml'     => '/foo/qux.bar/',
       'foo/bar.qux.yaml'     => '/foo/bar.qux/',
-      'foo/qux.bar.qux.yaml' => '/foo/qux.bar.qux/'
-    }.each_pair do |meta_filename, expected_identifier|
-      assert_equal(
-        expected_identifier,
-        data_source.instance_eval { identifier_for_filename(meta_filename) }
-      )
+      'foo/qux.bar.qux.yaml' => '/foo/qux.bar.qux/',
+      'foo/index.yaml'       => '/foo/',
+      'index.yaml'           => '/',
+      'foo/blah_index.yaml'  => '/foo/blah_index/'
+    }
+
+    data_source = new_data_source(:allow_periods_in_identifiers => true)
+    expectations.each_pair do |meta_filename, expected_identifier|
+      content_filename = meta_filename.sub(/yaml$/, 'html')
+      [ meta_filename, content_filename ].each do |filename|
+        assert_equal(
+          expected_identifier,
+          data_source.instance_eval { identifier_for_filename(filename) }
+        )
+      end
     end
   end
 
   def test_identifier_for_filename_with_subfilename_disallowing_periods_in_identifiers
-    # Create data source
-    data_source = new_data_source
-
-    # Build directory
-    FileUtils.mkdir_p('foo')
-    File.open('foo/bar.yaml',         'w') { |io| io.write('test') }
-    File.open('foo/bar.html',         'w') { |io| io.write('test') }
-    File.open('foo/quxbar.yaml',      'w') { |io| io.write('test') }
-    File.open('foo/quxbar.html',      'w') { |io| io.write('test') }
-    File.open('foo/barqux.yaml',      'w') { |io| io.write('test') }
-    File.open('foo/barqux.html',      'w') { |io| io.write('test') }
-    File.open('foo/quxbarqux.yaml',   'w') { |io| io.write('test') }
-    File.open('foo/quxbarqux.html',   'w') { |io| io.write('test') }
-    File.open('foo/qux.bar.yaml',     'w') { |io| io.write('test') }
-    File.open('foo/qux.bar.html',     'w') { |io| io.write('test') }
-    File.open('foo/bar.qux.yaml',     'w') { |io| io.write('test') }
-    File.open('foo/bar.qux.html',     'w') { |io| io.write('test') }
-    File.open('foo/qux.bar.qux.yaml', 'w') { |io| io.write('test') }
-    File.open('foo/qux.bar.qux.html', 'w') { |io| io.write('test') }
-
-    # Check content filename
-    {
+    expectations = {
       'foo/bar.yaml'         => '/foo/bar/',
       'foo/quxbar.yaml'      => '/foo/quxbar/',
       'foo/barqux.yaml'      => '/foo/barqux/',
       'foo/quxbarqux.yaml'   => '/foo/quxbarqux/',
       'foo/qux.bar.yaml'     => '/foo/qux/',
       'foo/bar.qux.yaml'     => '/foo/bar/',
-      'foo/qux.bar.qux.yaml' => '/foo/qux/'
-    }.each_pair do |meta_filename, expected_identifier|
-      assert_equal(
-        expected_identifier,
-        data_source.instance_eval { identifier_for_filename(meta_filename) }
-      )
+      'foo/qux.bar.qux.yaml' => '/foo/qux/',
+      'foo/index.yaml'       => '/foo/',
+      'index.yaml'           => '/',
+      'foo/blah_index.yaml'  => '/foo/blah_index/'
+    }
+
+    data_source = new_data_source
+    expectations.each_pair do |meta_filename, expected_identifier|
+      content_filename = meta_filename.sub(/yaml$/, 'html')
+      [ meta_filename, content_filename ].each do |filename|
+        assert_equal(
+          expected_identifier,
+          data_source.instance_eval { identifier_for_filename(filename) }
+        )
+      end
     end
   end
 

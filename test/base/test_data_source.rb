@@ -1,14 +1,12 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::DataSourceTest < MiniTest::Unit::TestCase
 
-class Nanoc3::DataSourceTest < MiniTest::Unit::TestCase
-
-  include Nanoc3::TestHelpers
+  include Nanoc::TestHelpers
 
   def test_loading
     # Create data source
-    data_source = Nanoc3::DataSource.new(nil, nil, nil, nil)
+    data_source = Nanoc::DataSource.new(nil, nil, nil, nil)
     data_source.expects(:up).times(1)
     data_source.expects(:down).times(1)
 
@@ -26,7 +24,7 @@ class Nanoc3::DataSourceTest < MiniTest::Unit::TestCase
 
   def test_not_implemented
     # Create data source
-    data_source = Nanoc3::DataSource.new(nil, nil, nil, nil)
+    data_source = Nanoc::DataSource.new(nil, nil, nil, nil)
 
     # Test optional methods
     data_source.up

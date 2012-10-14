@@ -1,7 +1,5 @@
 # encoding: utf-8
 
-require 'test/helper'
-
 describe 'Array#symbolize_keys' do
 
   it 'should convert keys to symbols' do
@@ -33,7 +31,7 @@ describe 'Array#freeze_recursively' do
       array[0] = 123
     rescue => e
       raised = true
-      assert_match /^can't modify frozen /, e.message
+      assert_match /(^can't modify frozen |^unable to modify frozen object$)/, e.message
     end
     assert raised
   end
@@ -47,9 +45,29 @@ describe 'Array#freeze_recursively' do
       array[1][0] = 123
     rescue => e
       raised = true
-      assert_match /^can't modify frozen /, e.message
+      assert_match /(^can't modify frozen |^unable to modify frozen object$)/, e.message
     end
     assert raised
+  end
+
+  it 'should not freeze infinitely' do
+    a = []
+    a << a
+
+    a.freeze_recursively
+
+    assert a.frozen?
+    assert a[0].frozen?
+    assert_equal a, a[0]
+  end
+
+end
+
+describe 'Array#checksum' do
+
+  it 'should work' do
+    expectation = '78468f950645150238a26f5b8f2dde39a75a7028'
+    [ [ :foo, 123 ]].checksum.must_equal expectation
   end
 
 end

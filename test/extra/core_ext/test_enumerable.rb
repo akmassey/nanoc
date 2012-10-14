@@ -1,10 +1,8 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::ExtraCoreExtEnumerableTest < MiniTest::Unit::TestCase
 
-class Nanoc3::ExtraCoreExtEnumerableTest < MiniTest::Unit::TestCase
-
-  include Nanoc3::TestHelpers
+  include Nanoc::TestHelpers
 
   class MyCollection
 

@@ -1,15 +1,13 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::Filters::ErubisTest < MiniTest::Unit::TestCase
 
-class Nanoc3::Filters::ErubisTest < MiniTest::Unit::TestCase
-
-  include Nanoc3::TestHelpers
+  include Nanoc::TestHelpers
 
   def test_filter_with_instance_variable
     if_have 'erubis' do
       # Create filter
-      filter = ::Nanoc3::Filters::Erubis.new({ :location => 'a cheap motel' })
+      filter = ::Nanoc::Filters::Erubis.new({ :location => 'a cheap motel' })
 
       # Run filter
       result = filter.run('<%= "I was hiding in #{@location}." %>')
@@ -20,7 +18,7 @@ class Nanoc3::Filters::ErubisTest < MiniTest::Unit::TestCase
   def test_filter_with_instance_method
     if_have 'erubis' do
       # Create filter
-      filter = ::Nanoc3::Filters::Erubis.new({ :location => 'a cheap motel' })
+      filter = ::Nanoc::Filters::Erubis.new({ :location => 'a cheap motel' })
 
       # Run filter
       result = filter.run('<%= "I was hiding in #{location}." %>')
@@ -31,7 +29,7 @@ class Nanoc3::Filters::ErubisTest < MiniTest::Unit::TestCase
   def test_filter_error
     if_have 'erubis' do
       # Create filter
-      filter = ::Nanoc3::Filters::Erubis.new
+      filter = ::Nanoc::Filters::Erubis.new
 
       # Run filter
       raised = false
@@ -49,11 +47,31 @@ class Nanoc3::Filters::ErubisTest < MiniTest::Unit::TestCase
   def test_filter_with_yield
     if_have 'erubis' do
       # Create filter
-      filter = ::Nanoc3::Filters::Erubis.new({ :content => 'a cheap motel' })
+      filter = ::Nanoc::Filters::Erubis.new({ :content => 'a cheap motel' })
 
       # Run filter
       result = filter.run('<%= "I was hiding in #{yield}." %>')
       assert_equal('I was hiding in a cheap motel.', result)
+    end
+  end
+
+  def test_filter_with_yield_without_content
+    if_have 'erubis' do
+      # Create filter
+      filter = ::Nanoc::Filters::Erubis.new({ :location => 'a cheap motel' })
+
+      # Run filter
+      assert_raises LocalJumpError do
+        filter.run('<%= "I was hiding in #{yield}." %>')
+      end
+    end
+  end
+
+  def test_filter_with_erbout
+    if_have 'erubis' do
+      filter = ::Nanoc::Filters::Erubis.new
+      result = filter.run('stuff<% _erbout << _erbout %>')
+      assert_equal 'stuffstuff', result
     end
   end
 

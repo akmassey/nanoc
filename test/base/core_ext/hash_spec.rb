@@ -1,7 +1,5 @@
 # encoding: utf-8
 
-require 'test/helper'
-
 describe 'Hash#symbolize_keys' do
 
   it 'should convert keys to symbols' do
@@ -51,7 +49,7 @@ describe 'Hash#freeze_recursively' do
       hash[:a] = 123
     rescue => e
       raised = true
-      assert_match /^can't modify frozen /, e.message
+      assert_match /(^can't modify frozen |^unable to modify frozen object$)/, e.message
     end
     assert raised
   end
@@ -65,9 +63,36 @@ describe 'Hash#freeze_recursively' do
       hash[:a][:b] = 123
     rescue => e
       raised = true
-      assert_match /^can't modify frozen /, e.message
+      assert_match /(^can't modify frozen |^unable to modify frozen object$)/, e.message
     end
     assert raised
+  end
+
+  it 'should not freeze infinitely' do
+    a = {}
+    a[:x] = a
+
+    a.freeze_recursively
+
+    assert a.frozen?
+    assert a[:x].frozen?
+    assert_equal a, a[:x]
+  end
+
+end
+
+describe 'Hash#checksum' do
+
+  it 'should work' do
+    expectation = '78468f950645150238a26f5b8f2dde39a75a7028'
+    { :foo => 123 }.checksum.must_equal expectation
+    [ [ :foo, 123 ]].checksum.must_equal expectation
+  end
+
+  it 'should sort keys' do
+    a = { :a => 1, :c => 2, :b => 3 }.checksum
+    b = { :a => 1, :b => 3, :c => 2 }.checksum
+    a.must_equal b
   end
 
 end

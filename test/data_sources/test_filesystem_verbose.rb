@@ -1,17 +1,15 @@
 # encoding: utf-8
 
-require 'test/helper'
+class Nanoc::DataSources::FilesystemVerboseTest < MiniTest::Unit::TestCase
 
-class Nanoc3::DataSources::FilesystemVerboseTest < MiniTest::Unit::TestCase
-
-  include Nanoc3::TestHelpers
+  include Nanoc::TestHelpers
 
   def new_data_source(params=nil)
     # Mock site
-    site = Nanoc3::Site.new({})
+    site = Nanoc::Site.new({})
 
     # Create data source
-    data_source = Nanoc3::DataSources::FilesystemVerbose.new(site, nil, nil, params)
+    data_source = Nanoc::DataSources::FilesystemVerbose.new(site, nil, nil, params)
 
     # Done
     data_source
@@ -82,7 +80,7 @@ class Nanoc3::DataSources::FilesystemVerboseTest < MiniTest::Unit::TestCase
     end
     
     # Load
-    items = data_source.items
+    items = data_source.items.sort_by { |i| i[:title] }
     
     # Check
     assert_equal 2, items.size
@@ -275,7 +273,7 @@ class Nanoc3::DataSources::FilesystemVerboseTest < MiniTest::Unit::TestCase
     File.open('foo/stuff.dat', 'w') { |io| io.write("random binary data") }
 
     # Load
-    items = data_source.send(:load_objects, 'foo', 'item', Nanoc3::Item)
+    items = data_source.send(:load_objects, 'foo', 'item', Nanoc::Item)
 
     # Check
     assert_equal 1, items.size
