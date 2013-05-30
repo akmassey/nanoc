@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::DependencyTrackerTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::DependencyTrackerTest < Nanoc::TestCase
 
   def test_initialize
     # Mock items
@@ -111,7 +109,7 @@ class Nanoc::DependencyTrackerTest < MiniTest::Unit::TestCase
     assert_empty tracker.objects_causing_outdatedness_of(items[1])
   end
 
-  def test_store_graph_and_load_graph_simple
+  def test_store_and_load_simple
     # Mock items
     items = [ mock('0'), mock('1'), mock('2'), mock('3') ]
     items.each { |i| i.stubs(:type).returns(:item) }
@@ -129,14 +127,14 @@ class Nanoc::DependencyTrackerTest < MiniTest::Unit::TestCase
     tracker.record_dependency(items[1], items[3])
 
     # Store
-    tracker.store_graph
+    tracker.store
     assert File.file?(tracker.filename)
 
     # Re-create
     tracker = Nanoc::DependencyTracker.new(items)
 
     # Load
-    tracker.load_graph
+    tracker.load
 
     # Check loaded graph
     assert_contains_exactly [ items[1] ],           tracker.objects_causing_outdatedness_of(items[0])
@@ -145,7 +143,7 @@ class Nanoc::DependencyTrackerTest < MiniTest::Unit::TestCase
     assert_empty tracker.objects_causing_outdatedness_of(items[3])
   end
 
-  def test_store_graph_and_load_graph_with_removed_items
+  def test_store_and_load_with_removed_items
     # Mock items
     items = [ mock('0'), mock('1'), mock('2'), mock('3') ]
     items.each { |i| i.stubs(:type).returns(:item) }
@@ -167,14 +165,14 @@ class Nanoc::DependencyTrackerTest < MiniTest::Unit::TestCase
     tracker.record_dependency(old_items[1], old_items[3])
 
     # Store
-    tracker.store_graph
+    tracker.store
     assert File.file?(tracker.filename)
 
     # Re-create
     tracker = Nanoc::DependencyTracker.new(new_items)
 
     # Load
-    tracker.load_graph
+    tracker.load
 
     # Check loaded graph
     assert_contains_exactly [ items[1] ],       tracker.objects_causing_outdatedness_of(items[0])
@@ -182,7 +180,7 @@ class Nanoc::DependencyTrackerTest < MiniTest::Unit::TestCase
     assert_empty tracker.objects_causing_outdatedness_of(items[2])
   end
 
-  def test_store_graph_with_nils_in_dst
+  def test_store_with_nils_in_dst
     # Mock items
     items = [ mock('0'), mock('1'), mock('2') ]
     items.each { |i| i.stubs(:type).returns(:item) }
@@ -198,21 +196,21 @@ class Nanoc::DependencyTrackerTest < MiniTest::Unit::TestCase
     tracker.record_dependency(items[1], nil)
 
     # Store
-    tracker.store_graph
+    tracker.store
     assert File.file?(tracker.filename)
 
     # Re-create
     tracker = Nanoc::DependencyTracker.new(items)
 
     # Load
-    tracker.load_graph
+    tracker.load
 
     # Check loaded graph
     assert_contains_exactly [ items[1] ], tracker.objects_causing_outdatedness_of(items[0])
     assert_contains_exactly [ nil ],      tracker.objects_causing_outdatedness_of(items[1])
   end
 
-  def test_store_graph_with_nils_in_src
+  def test_store_with_nils_in_src
     # Mock items
     items = [ mock('0'), mock('1'), mock('2') ]
     items.each { |i| i.stubs(:type).returns(:item) }
@@ -228,14 +226,14 @@ class Nanoc::DependencyTrackerTest < MiniTest::Unit::TestCase
     tracker.record_dependency(nil,      items[2])
 
     # Store
-    tracker.store_graph
+    tracker.store
     assert File.file?(tracker.filename)
 
     # Re-create
     tracker = Nanoc::DependencyTracker.new(items)
 
     # Load
-    tracker.load_graph
+    tracker.load
 
     # Check loaded graph
     assert_contains_exactly [ items[1] ], tracker.objects_causing_outdatedness_of(items[0])

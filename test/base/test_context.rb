@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::ContextTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::ContextTest < Nanoc::TestCase
 
   def test_context_with_instance_variable
     # Create context
@@ -22,7 +20,7 @@ class Nanoc::ContextTest < MiniTest::Unit::TestCase
 
   def test_example
     # Parse
-    YARD.parse('../lib/nanoc/base/context.rb')
+    YARD.parse('../lib/nanoc/base/helper/context.rb')
 
     # Run
     assert_examples_correct 'Nanoc::Context#initialize'

@@ -1,13 +1,11 @@
 # encoding: utf-8
 
-class Nanoc::CLI::Commands::DeployTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::CLI::Commands::DeployTest < Nanoc::TestCase
 
   def test_deploy
     if_have 'systemu' do
       with_site do |site|
-        File.open('config.yaml', 'w') do |io|
+        File.open('nanoc.yaml', 'w') do |io|
           io.write "deploy:\n"
           io.write "  public:\n"
           io.write "    kind: rsync\n"
@@ -28,7 +26,7 @@ class Nanoc::CLI::Commands::DeployTest < MiniTest::Unit::TestCase
   def test_deploy_with_dry_run
     if_have 'systemu' do
       with_site do |site|
-        File.open('config.yaml', 'w') do |io|
+        File.open('nanoc.yaml', 'w') do |io|
           io.write "deploy:\n"
           io.write "  public:\n"
           io.write "    kind: rsync\n"
@@ -46,10 +44,28 @@ class Nanoc::CLI::Commands::DeployTest < MiniTest::Unit::TestCase
     end
   end
 
+  def test_deploy_with_list_without_config
+    if_have 'systemu' do
+      with_site do |site|
+        FileUtils.mkdir_p('output')
+        File.open('output/blah.html', 'w') { |io| io.write 'moo' }
+
+        ios = capturing_stdio do
+          Nanoc::CLI.run %w( deploy -L )
+        end
+
+        assert ios[:stdout].include?('No deployment configurations.')
+
+        refute File.directory?('mydestination')
+        refute File.file?('mydestination/blah.html')
+      end
+    end
+  end
+
   def test_deploy_with_list
     if_have 'systemu' do
       with_site do |site|
-        File.open('config.yaml', 'w') do |io|
+        File.open('nanoc.yaml', 'w') do |io|
           io.write "deploy:\n"
           io.write "  public:\n"
           io.write "    kind: rsync\n"
@@ -71,10 +87,35 @@ class Nanoc::CLI::Commands::DeployTest < MiniTest::Unit::TestCase
     end
   end
 
+  def test_deploy_with_list_deployers
+    if_have 'systemu' do
+      with_site do |site|
+        File.open('nanoc.yaml', 'w') do |io|
+          io.write "deploy:\n"
+          io.write "  public:\n"
+          io.write "    kind: rsync\n"
+          io.write "    dst: mydestination"
+        end
+
+        FileUtils.mkdir_p('output')
+        File.open('output/blah.html', 'w') { |io| io.write 'moo' }
+
+        ios = capturing_stdio do
+          Nanoc::CLI.run %w( deploy -D )
+        end
+
+        assert ios[:stdout].include?('Available deployers:')
+
+        refute File.directory?('mydestination')
+        refute File.file?('mydestination/blah.html')
+      end
+    end
+  end
+
   def test_deploy_without_kind
     if_have 'systemu' do
       with_site do |site|
-        File.open('config.yaml', 'w') do |io|
+        File.open('nanoc.yaml', 'w') do |io|
           io.write "deploy:\n"
           io.write "  public:\n"
           io.write "    dst: mydestination"
@@ -98,7 +139,7 @@ class Nanoc::CLI::Commands::DeployTest < MiniTest::Unit::TestCase
   def test_deploy_without_target_without_default
     if_have 'systemu' do
       with_site do |site|
-        File.open('config.yaml', 'w') do |io|
+        File.open('nanoc.yaml', 'w') do |io|
           io.write "deploy:\n"
           io.write "  public:\n"
           io.write "    dst: mydestination"
@@ -107,21 +148,20 @@ class Nanoc::CLI::Commands::DeployTest < MiniTest::Unit::TestCase
         FileUtils.mkdir_p('output')
         File.open('output/blah.html', 'w') { |io| io.write 'moo' }
 
-        ios = capturing_stdio do
-          assert_raises SystemExit do
+         capturing_stdio do
+          err = assert_raises Nanoc::Errors::GenericTrivial do
             Nanoc::CLI.run %w( deploy )
           end
+          assert_equal 'The site has no deployment configuration for default.', err.message
         end
-
-        assert ios[:stderr].include?('The site configuration has no deploy configuration for default.')
       end
     end
   end
 
-  def test_deploy_without_target_without_default
+  def test_deploy_without_target_with_default
     if_have 'systemu' do
       with_site do |site|
-        File.open('config.yaml', 'w') do |io|
+        File.open('nanoc.yaml', 'w') do |io|
           io.write "deploy:\n"
           io.write "  default:\n"
           io.write "    dst: mydestination"
@@ -130,7 +170,7 @@ class Nanoc::CLI::Commands::DeployTest < MiniTest::Unit::TestCase
         FileUtils.mkdir_p('output')
         File.open('output/blah.html', 'w') { |io| io.write 'moo' }
 
-        ios = capturing_stdio do
+        capturing_stdio do
           Nanoc::CLI.run %w( deploy )
         end
 

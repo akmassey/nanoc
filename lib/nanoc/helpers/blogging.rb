@@ -28,7 +28,12 @@ module Nanoc::Helpers
     #
     # @return [Array] An array containing all articles
     def articles
-      @items.select { |item| item[:kind] == 'article' }
+      blk = lambda { @items.select { |item| item[:kind] == 'article' } }
+      if @items.frozen?
+        @article_items ||= blk.call
+      else 
+        blk.call
+      end
     end
 
     # Returns a sorted list of articles, i.e. items where the `kind`
@@ -37,9 +42,15 @@ module Nanoc::Helpers
     #
     # @return [Array] A sorted array containing all articles
     def sorted_articles
-      articles.sort_by do |a|
-        attribute_to_time(a[:created_at])
-      end.reverse
+      blk = lambda do 
+        articles.sort_by { |a| attribute_to_time(a[:created_at]) }.reverse
+      end
+
+      if @items.frozen?
+        @sorted_article_items ||= blk.call
+      else 
+        blk.call
+      end
     end
 
     class AtomFeedBuilder
@@ -189,7 +200,10 @@ module Nanoc::Helpers
     #
     # * `title` - The title of the blog post
     #
-    # * `kind` and `created_at` (described above)
+    # * `created_at` (described above)
+    #
+    # * `kind` (described above) *unless* you are passing an explicit list of
+    #   articles using the `:articles` parameter
     #
     # The following attributes can optionally be set on blog articles to
     # change the behaviour of the Atom feed:
@@ -347,7 +361,7 @@ module Nanoc::Helpers
     # used in the Atom feed to uniquely identify articles. These IDs are
     # created using a procedure suggested by Mark Pilgrim and described in his
     # ["How to make a good ID in Atom" blog post]
-    # (http://diveintomark.org/archives/2004/05/28/howto-atom-id).
+    # (http://web.archive.org/web/20110915110202/http://diveintomark.org/archives/2004/05/28/howto-atom-id).
     #
     # @param [Nanoc::Item] item The item for which to create an atom tag
     #
@@ -357,7 +371,7 @@ module Nanoc::Helpers
 
       formatted_date = attribute_to_time(item[:created_at]).to_iso8601_date
 
-      'tag:' + hostname + ',' + formatted_date + ':' + base_dir + (item.path || item.identifier)
+      'tag:' + hostname + ',' + formatted_date + ':' + base_dir + (item.path || item.identifier.to_s + '/')
     end
 
     # Converts the given attribute (which can be a string, a Time or a Date)

@@ -1,11 +1,13 @@
 # encoding: utf-8
 
-require 'rubypants'
-
 module Nanoc::Filters
   class RubyPants < Nanoc::Filter
 
-    # Runs the content through [RubyPants](http://chneukirchen.org/blog/static/projects/rubypants.html).
+    identifier :rubypants
+
+    requires 'rubypants'
+
+    # Runs the content through [RubyPants](http://rubydoc.info/gems/rubypants/).
     # This method takes no options.
     #
     # @param [String] content The content to filter

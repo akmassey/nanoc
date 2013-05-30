@@ -1,9 +1,11 @@
 # encoding: utf-8
 
-require 'rdiscount'
-
 module Nanoc::Filters
   class RDiscount < Nanoc::Filter
+
+    identifier :rdiscount
+
+    requires 'rdiscount'
 
     # Runs the content through [RDiscount](http://github.com/rtomayko/rdiscount).
     #

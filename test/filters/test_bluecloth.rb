@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::Filters::BlueClothTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::Filters::BlueClothTest < Nanoc::TestCase
 
   def test_filter
     if_have 'bluecloth' do
@@ -10,7 +8,7 @@ class Nanoc::Filters::BlueClothTest < MiniTest::Unit::TestCase
       filter = ::Nanoc::Filters::BlueCloth.new
 
       # Run filter
-      result = filter.run("> Quote")
+      result = filter.setup_and_run("> Quote")
       assert_match %r{<blockquote>\s*<p>Quote</p>\s*</blockquote>}, result
     end
   end

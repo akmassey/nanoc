@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::DirectedGraphTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::DirectedGraphTest < Nanoc::TestCase
 
   def test_direct_predecessors
     graph = Nanoc::DirectedGraph.new([ 1, 2, 3 ])
@@ -284,7 +282,7 @@ class Nanoc::DirectedGraphTest < MiniTest::Unit::TestCase
   end
 
   def test_example
-    YARD.parse('../lib/nanoc/base/directed_graph.rb')
+    YARD.parse('../lib/nanoc/base/helper/directed_graph.rb')
     assert_examples_correct 'Nanoc::DirectedGraph'
   end
 

@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::Helpers::FilteringTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::Helpers::FilteringTest < Nanoc::TestCase
 
   include Nanoc::Helpers::Filtering
 
@@ -63,16 +61,16 @@ class Nanoc::Helpers::FilteringTest < MiniTest::Unit::TestCase
               "<% end %>\n"
 
     # Evaluate content
-    error = assert_raises(Nanoc::Errors::UnknownFilter) do
+    assert_raises(Nanoc::Errors::UnknownFilter) do
       ::ERB.new(content).result(binding)
     end
   end
 
   def test_filter_with_arguments
-    if_have 'coderay' do
+    if_have 'erb' do
       # Build content to be evaluated
-      content = "<% filter :coderay, :language => 'ruby' do %>\n" +
-                "   def some_function ; x = blah.foo ; x.bar 'xyzzy' ; end\n" +
+      content = "<% filter :erb, :language => 'ruby' do %>\n" +
+                "   <%%= 'foo' %><%%= 'bar' %>\n" +
                 "<% end %>\n"
 
       # Mock item and rep
@@ -81,7 +79,7 @@ class Nanoc::Helpers::FilteringTest < MiniTest::Unit::TestCase
 
       # Evaluate content
       result = ::ERB.new(content).result(binding)
-      assert_match(%r{<span class="keyword">def</span> <span class="function">some_function</span>}, result)
+      assert_match(/foobar/, result)
     end
   end
 

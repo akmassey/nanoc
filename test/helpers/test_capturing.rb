@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::Helpers::CapturingTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::Helpers::CapturingTest < Nanoc::TestCase
 
   include Nanoc::Helpers::Capturing
 
@@ -10,8 +8,8 @@ class Nanoc::Helpers::CapturingTest < MiniTest::Unit::TestCase
     require 'erb'
 
     File.open('Rules', 'w') do |io|
-      io.write "compile '*' do ; filter :erb ; end\n"
-      io.write "route '*' do ; item.identifier + 'index.html' ; end\n"
+      io.write "compile '/**/*' do ; filter :erb ; end\n"
+      io.write "route '/**/*' do ; item.identifier ; end\n"
     end
 
     # Build content to be evaluated
@@ -20,8 +18,8 @@ class Nanoc::Helpers::CapturingTest < MiniTest::Unit::TestCase
               "<% end %> foot"
 
     # Build site
-    @site = Nanoc3::Site.new({})
-    @item = Nanoc::Item.new('moo', {}, '/blah/')
+    @site = Nanoc::Site.new({})
+    @item = Nanoc::Item.new('moo', {}, '/blah')
     @item.site = @site
 
     # Evaluate content
@@ -29,7 +27,6 @@ class Nanoc::Helpers::CapturingTest < MiniTest::Unit::TestCase
 
     # Check
     assert_equal '3', content_for(@item, :sidebar).strip
-    assert_equal '3', @item[:content_for_sidebar].strip
     assert_match(/^head\s+foot$/, result)
   end
 
@@ -37,8 +34,8 @@ class Nanoc::Helpers::CapturingTest < MiniTest::Unit::TestCase
     require 'erb'
 
     # Build site
-    @site = Nanoc3::Site.new({})
-    @item = Nanoc::Item.new('moo', {}, '/blah/')
+    @site = Nanoc::Site.new({})
+    @item = Nanoc::Item.new('moo', {}, '/blah')
 
     # Capture
     _erbout = 'foo'
@@ -55,8 +52,8 @@ class Nanoc::Helpers::CapturingTest < MiniTest::Unit::TestCase
     require 'erb'
 
     File.open('Rules', 'w') do |io|
-      io.write "compile '*' do ; filter :erb ; end\n"
-      io.write "route '*' do ; item.identifier + 'index.html' ; end\n"
+      io.write "compile '/**/*' do ; filter :erb ; end\n"
+      io.write "route '/**/*' do ; item.identifier ; end\n"
     end
 
     content = <<EOS
@@ -71,8 +68,8 @@ head
 foot
 EOS
 
-    @site = Nanoc3::Site.new({})
-    @item = Nanoc::Item.new('content', {}, '/')
+    @site = Nanoc::Site.new({})
+    @item = Nanoc::Item.new('content', {}, '/index.md')
 
     result = ::ERB.new(content).result(binding)
 
@@ -85,11 +82,11 @@ EOS
     require 'erb'
 
     File.open('Rules', 'w') do |io|
-      io.write "compile '*' do ; filter :erb ; end\n"
-      io.write "route '*' do ; item.identifier + 'index.html' ; end\n"
+      io.write "compile '/**/*' do ; filter :erb ; end\n"
+      io.write "route '/**/*' do ; item.identifier ; end\n"
     end
 
-    @site = Nanoc3::Site.new({})
+    @site = Nanoc::Site.new({})
     @item = Nanoc::Item.new('content', {}, '/')
     content = "<% content_for :a do %>Content One<% end %>"
     ::ERB.new(content).result(binding)
@@ -97,7 +94,7 @@ EOS
     assert_equal 'Content One', content_for(@item, :a)
     assert_equal nil,           content_for(@item, :b)
 
-    @site = Nanoc3::Site.new({})
+    @site = Nanoc::Site.new({})
     @item = Nanoc::Item.new('content', {}, '/')
     content = "<% content_for :b do %>Content Two<% end %>"
     ::ERB.new(content).result(binding)
@@ -113,11 +110,11 @@ EOS
         io.write 'include Nanoc::Helpers::Capturing'
       end
       File.open('content/includer.erb', 'w') do |io|
-        io.write '[<%= content_for(@items.find { |i| i.identifier == \'/includee/\' }, :blah) %>]'
+        io.write '[<%= content_for(@items["/includee.erb"], :blah) %>]'
       end
       File.open('Rules', 'w') do |io|
-        io.write "compile '*' do ; filter :erb ; end\n"
-        io.write "route '*' do ; item.identifier + 'index.html' ; end\n"
+        io.write "compile '/**/*' do ; filter :erb ; end\n"
+        io.write "route '/**/*' do ; item.identifier.with_ext('html') ; end\n"
       end
 
       # Compile once
@@ -125,14 +122,14 @@ EOS
         io.write '{<% content_for :blah do %>Old content<% end %>}'
       end
       Nanoc::CLI.run(%w(compile))
-      assert_equal '[Old content]', File.read('output/includer/index.html')
+      assert_equal '[Old content]', File.read('output/includer.html')
 
       # Compile again
       File.open('content/includee.erb', 'w') do |io|
         io.write '{<% content_for :blah do %>New content<% end %>}'
       end
       Nanoc::CLI.run(%w(compile))
-      assert_equal '[New content]', File.read('output/includer/index.html')
+      assert_equal '[New content]', File.read('output/includer.html')
     end
   end
 
@@ -144,15 +141,15 @@ EOS
         io.write "include Nanoc::Helpers::Rendering\n"
       end
       File.open('content/includer.erb', 'w') do |io|
-        io.write '{<%= render \'partial\', :item => nil %>}'
+        io.write '{<%= render "/partial.erb", :item => nil %>}'
       end
       File.open('layouts/partial.erb', 'w') do |io|
-        io.write '[<%= @item.inspect %>-<%= content_for(@items.find { |i| i.identifier == \'/includee/\' }, :blah) %>]'
+        io.write '[<%= @item.inspect %>-<%= content_for(@items["/includee.erb"], :blah) %>]'
       end
       File.open('Rules', 'w') do |io|
-        io.write "compile '*' do ; filter :erb ; end\n"
-        io.write "route '*' do ; item.identifier + 'index.html' ; end\n"
-        io.write "layout '*', :erb\n"
+        io.write "compile '/**/*' do ; filter :erb ; end\n"
+        io.write "route '/**/*' do ; item.identifier.with_ext('html') ; end\n"
+        io.write "layout '/**/*', :erb\n"
       end
 
       # Compile once
@@ -160,14 +157,14 @@ EOS
         io.write '{<% content_for :blah do %>Old content<% end %>}'
       end
       Nanoc::CLI.run(%w(compile))
-      assert_equal '{[nil-Old content]}', File.read('output/includer/index.html')
+      assert_equal '{[nil-Old content]}', File.read('output/includer.html')
 
       # Compile again
       File.open('content/includee.erb', 'w') do |io|
         io.write '{<% content_for :blah do %>New content<% end %>}'
       end
       Nanoc::CLI.run(%w(compile))
-      assert_equal '{[nil-New content]}', File.read('output/includer/index.html')
+      assert_equal '{[nil-New content]}', File.read('output/includer.html')
     end
   end
 
@@ -183,12 +180,12 @@ EOS
       end
 
       File.open('Rules', 'w') do |io|
-        io.write "compile '*' do ; filter :erb ; end\n"
-        io.write "route '*' do ; item.identifier + 'index.html' ; end\n"
+        io.write "compile '/**/*' do ; filter :erb ; end\n"
+        io.write "route '/**/*' do ; item.identifier.with_ext('html') ; end\n"
       end
 
       Nanoc::CLI.run(%w(compile))
-      assert_equal 'Foo!', File.read('output/self/index.html')
+      assert_equal 'Foo!', File.read('output/self.html')
     end
   end
 
@@ -202,24 +199,24 @@ EOS
         io.write '{<% content_for :blah do %>Content<% end %>}'
       end
       File.open('Rules', 'w') do |io|
-        io.write "compile '*' do ; filter :erb ; end\n"
-        io.write "route '*' do ; item.identifier + 'index.html' ; end\n"
+        io.write "compile '/**/*' do ; filter :erb ; end\n"
+        io.write "route '/**/*' do ; item.identifier.with_ext('html') ; end\n"
       end
 
       # Compile once
       File.open('content/includer.erb', 'w') do |io|
-        io.write 'Old-<%= content_for(@items.find { |i| i.identifier == \'/includee/\' }, :blah) %>'
+        io.write 'Old-<%= content_for(@items["/includee.erb"], :blah) %>'
       end
       Nanoc::CLI.run(%w(compile))
-      assert_equal 'Old-Content', File.read('output/includer/index.html')
+      assert_equal 'Old-Content', File.read('output/includer.html')
 
       # Compile again
       $LOUD = true
       File.open('content/includer.erb', 'w') do |io|
-        io.write 'New-<%= content_for(@items.find { |i| i.identifier == \'/includee/\' }, :blah) %>'
+        io.write 'New-<%= content_for(@items["/includee.erb"], :blah) %>'
       end
       Nanoc::CLI.run(%w(compile))
-      assert_equal 'New-Content', File.read('output/includer/index.html')
+      assert_equal 'New-Content', File.read('output/includer.html')
     end
   ensure
     $LOUD = false 

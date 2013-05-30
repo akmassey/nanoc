@@ -1,9 +1,11 @@
 # encoding: utf-8
 
-require 'maruku'
-
 module Nanoc::Filters
   class Maruku < Nanoc::Filter
+
+    identifier :maruku
+
+    requires 'maruku'
 
     # Runs the content through [Maruku](http://maruku.rubyforge.org/).
     # Parameters passed to this filter will be passed on to Maruku.

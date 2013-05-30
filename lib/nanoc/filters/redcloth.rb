@@ -1,9 +1,11 @@
 # encoding: utf-8
 
-require 'redcloth'
-
 module Nanoc::Filters
   class RedCloth < Nanoc::Filter
+
+    identifier :redcloth
+
+    requires 'redcloth'
 
     # Runs the content through [RedCloth](http://redcloth.org/). This method
     # takes the following options:

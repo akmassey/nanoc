@@ -8,17 +8,21 @@ begin
   require 'minitest/unit'
   require 'minitest/spec'
   require 'minitest/mock'
-  require 'mocha'
+  require 'mocha/setup'
 rescue => e
   $stderr.puts "To run the nanoc unit tests, you need minitest and mocha."
   raise e
 end
 
+# Setup coverage
+# (disabled until colorize/colored issue is resolved)
+#require 'coveralls'
+#Coveralls.wear!
+
 # Load nanoc
 $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__) + '/../lib'))
 require 'nanoc'
 require 'nanoc/cli'
-require 'nanoc/tasks'
 
 # Load miscellaneous requirements
 require 'stringio'
@@ -58,19 +62,21 @@ module Nanoc::TestHelpers
 
     # Build rules
     rules_content = <<EOS
-compile '*' do
+compile '/**/*' do
   {{compilation_rule_content}}
 end
 
-route '*' do
+route '/**/*' do
   if item.binary?
-    item.identifier.chop + (item[:extension] ? '.' + item[:extension] : '')
+    item.identifier
+  elsif item.identifier == '/index.html'
+    '/index.html'
   else
-    item.identifier + 'index.html'
+    item.identifier.without_ext + '/index.html'
   end
 end
 
-layout '*', :erb
+layout '/**/*', :erb
 EOS
     rules_content.gsub!('{{compilation_rule_content}}', params[:compilation_rule_content] || '')
 
@@ -89,7 +95,7 @@ EOS
           end
         end
 
-        File.open('config.yaml', 'w') { |io| io.write('stuff: 12345') }
+        File.open('nanoc.yaml', 'w') { |io| io.write('stuff: 12345') }
         File.open('Rules', 'w') { |io| io.write(rules_content) }
       end
     end
@@ -119,6 +125,7 @@ EOS
 
     # Enter tmp
     FileUtils.mkdir_p('tmp')
+    @orig_wd = FileUtils.pwd
     FileUtils.cd('tmp')
 
     # Let us get to the raw errors
@@ -130,7 +137,7 @@ EOS
     Nanoc::CLI::ErrorHandler.enable
 
     # Exit tmp
-    FileUtils.cd('..')
+    FileUtils.cd(@orig_wd)
     FileUtils.rm_rf('tmp')
 
     # Go unquiet
@@ -199,10 +206,21 @@ EOS
       'Expected %s to contain all the elements of %s' % [actual.inspect, expected.inspect]
   end
 
+  def assert_raises_frozen_error
+    error = assert_raises(RuntimeError, TypeError) { yield }
+    assert_match(/(^can't modify frozen |^unable to modify frozen object$)/, error.message)
+  end
+
+end
+
+class Nanoc::TestCase < Minitest::Test
+
+  include Nanoc::TestHelpers
+
 end
 
 # Unexpected system exit is unexpected
-::MiniTest::Unit::TestCase::PASSTHROUGH_EXCEPTIONS.delete(SystemExit)
+::Minitest::Test::PASSTHROUGH_EXCEPTIONS.delete(SystemExit)
 
 # A more precise inspect method for Time improves assert failure messages.
 #

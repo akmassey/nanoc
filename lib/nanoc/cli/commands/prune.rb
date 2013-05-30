@@ -5,10 +5,10 @@ summary     'remove files not managed by nanoc from the output directory'
 description <<-EOS
 Find all files in the output directory that do not correspond to an item
 managed by nanoc and remove them. Since this is a hazardous operation, an
-additional --yes flag is needed as confirmation.
+additional `--yes` flag is needed as confirmation.
 
-Also see the auto_prune site configuration option in config.yaml, which will
-automatically prune after compilation.
+Also see the `auto_prune` configuration option in `nanoc.yaml` (`config.yaml`
+for older nanoc sites), which will automatically prune after compilation.
 EOS
 
 flag :y, :yes,       'confirm deletion'
@@ -19,7 +19,7 @@ module Nanoc::CLI::Commands
   class Prune < ::Nanoc::CLI::CommandRunner
 
     def run
-      require_site
+      self.load_site
 
       if options.has_key?(:yes)
         Nanoc::Extra::Pruner.new(self.site, :exclude => self.prune_config_exclude).run

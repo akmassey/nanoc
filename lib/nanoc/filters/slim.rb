@@ -1,13 +1,15 @@
 # encoding: utf-8
 
-require 'slim'
-
 module Nanoc::Filters
 
   # @since 3.2.0
   class Slim < Nanoc::Filter
 
-    # Runs the content through [Slim](http://slim-lang.com/)
+    identifier :slim
+
+    requires 'slim'
+
+    # Runs the content through [Slim](http://slim-lang.com/).
     # This method takes no options.
     #
     # @param [String] content The content to filter

@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::Filters::MustacheTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::Filters::MustacheTest < Nanoc::TestCase
 
   def test_filter
     if_have 'mustache' do
@@ -10,14 +8,14 @@ class Nanoc::Filters::MustacheTest < MiniTest::Unit::TestCase
       item = Nanoc::Item.new(
         'content',
         { :title => 'Max Payne', :protagonist => 'Max Payne' },
-        '/games/max-payne/'
+        '/games/max-payne.md'
       )
 
       # Create filter
       filter = ::Nanoc::Filters::Mustache.new({ :item => item })
 
       # Run filter
-      result = filter.run('The protagonist of {{title}} is {{protagonist}}.')
+      result = filter.setup_and_run('The protagonist of {{title}} is {{protagonist}}.')
       assert_equal('The protagonist of Max Payne is Max Payne.', result)
     end
   end
@@ -28,7 +26,7 @@ class Nanoc::Filters::MustacheTest < MiniTest::Unit::TestCase
       item = Nanoc::Item.new(
         'content',
         { :title => 'Max Payne', :protagonist => 'Max Payne' },
-        '/games/max-payne/'
+        '/games/max-payne.md'
       )
 
       # Create filter
@@ -36,7 +34,7 @@ class Nanoc::Filters::MustacheTest < MiniTest::Unit::TestCase
         { :content => 'No Payne No Gayne', :item => item })
 
       # Run filter
-      result = filter.run('Max says: {{yield}}.')
+      result = filter.setup_and_run('Max says: {{yield}}.')
       assert_equal('Max says: No Payne No Gayne.', result)
     end
   end

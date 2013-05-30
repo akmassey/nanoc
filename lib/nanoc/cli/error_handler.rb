@@ -58,6 +58,13 @@ module Nanoc::CLI
           exit!(0)
         end
       end
+      begin
+        Signal.trap('USR1') do
+          puts "Caught USR1; dumping a stack trace"
+          puts caller.map { |i| "  #{i}" }.join("\n")
+        end
+      rescue ArgumentError
+      end
 
       # Run
       yield
@@ -201,6 +208,7 @@ module Nanoc::CLI
       'maruku'         => 'maruku',
       'mime/types'     => 'mime-types',
       'nokogiri'       => 'nokogiri',
+      'pry'            => 'pry',
       'rack'           => 'rack',
       'rack/cache'     => 'rack-cache',
       'rainpress'      => 'rainpress',
@@ -229,7 +237,11 @@ module Nanoc::CLI
 
         # Build message
         if gem_name
-          "Try installing the '#{gem_name}' gem (`gem install #{gem_name}`) and then re-running the command."
+          if self.using_bundler?
+            "Make sure the gem is added to Gemfile and run `bundle install`."
+          else
+            "Install the '#{gem_name}' gem using `gem install #{gem_name}`."
+          end
         end
       when RuntimeError
         if error.message =~ /^can't modify frozen/
@@ -240,6 +252,10 @@ module Nanoc::CLI
           "disabled in 3.2.x in order to allow compiler optimisations.)"
         end
       end
+    end
+
+    def using_bundler?
+      defined?(Bundler) && Bundler::SharedHelpers.in_bundle?
     end
 
     def write_section_header(stream, title, params={})
@@ -291,7 +307,7 @@ module Nanoc::CLI
     def write_issue_link(stream, params={})
       stream.puts
       stream.puts "If you believe this is a bug in nanoc, please do report it at"
-      stream.puts "-> https://github.com/ddfreyne/nanoc/issues/new <-"
+      stream.puts "-> https://github.com/nanoc/nanoc/issues/new <-"
       stream.puts
       stream.puts "A detailed crash log has been written to ./crash.log."
     end

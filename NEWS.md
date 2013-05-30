@@ -1,9 +1,163 @@
 # nanoc news
 
-## 3.5 (???)
+## 4.0.0
+
+Removed:
+
+* Support for Ruby 1.8.x
+* All code that was deprecated in nanoc 3.x
+* Bundler support
+* `filesystem_verbose`
+* VCS interface
+* `create-item` and `create-layout` commands (create the files manually)
+* `watch` and `autocompile` commands (use `guard-nanoc`)
+* `update` command
+* All rake tasks
+* Alternative spelling for `Rules` and `Checks` files
+* Child-parent links (for now)
+* `static` data source
+
+Changed:
+
+* The encoding is now determined only from the configuration file, not from the environment
+* The `filesystem_unified` data source is now named `filesystem`
+* The filesystem data source metadata section now start with three dashes, not five
+* Identifiers are now paths that include the extension
+* The Rules DSL now uses globs (as well as regular expressions, like before)
+
+## 3.6.4 (???)
+
+Enhancements:
+
+* Deprecated `watch` and `autocompile` commands in favour of [`guard-nanoc`](https://github.com/nanoc/guard-nanoc)
+
+Fixes:
+
+* Fixed bug which could cause the `tmp/` dir to blow up in size
+* Unescaped URLs when checking internal links
+
+## 3.6.3 (2013-04-24)
+
+Fixes:
+
+* Added support for growlnotify on Windows (#253, #267)
+* Fixed bug which caused the external links checker to ignore the query string (#279, #297)
+* Removed weird treatment of `DOCTYPE`s in the `relativize_paths` filter (#296)
+* Fixed CodeRay syntax coloring on Ruby 2.0
+* Silenced "Could not find files for the given pattern(s)" message on Windows (#298)
+* Fixed issue which could cause `output.diff` not to be generated correctly (#255, #301)
+* Let filesystem and static data sources follow symlinks (#299, #302)
+* Added compatibility with Listen 1.0 (#309)
+* Let `#passthrough` in Rules work well with the static data source (#251) [Gregory Pakosz]
+* Made timing information be more accurate (#303)
+
+## 3.6.2 (2013-03-23)
+
+Fixes:
+
+* Removed the list of available deployers from the `deploy` help text and moved
+  them into a new `--list-deployers` option [Damien Pollet]
+* Fixed warning about `__send__ `and `object_id` being redefined on Ruby
+  1.8.x [Justin Hileman]
+
+Enhancements:
+
+* Added possible alternative names for the `Checks` file for consistency with
+  the `Rules` file: `Checks.rb`, `checks`, `checks.rb` [Damien Pollet]
+* Made sure unchanged files never have their mtime updated [Justin Hileman]
+* Made link checker retry 405 Method Not Allowed results with GET instead of
+  HEAD [Daniel Hofstetter]
+
+## 3.6.1 (2013-02-25)
+
+Fixes:
+
+* Fixed bug which could cause the Sass filter to raise a load error [Damien Pollet]
+* Fixed warnings about `__send__` and `object_id` being redefined [Justin Hileman]
+* Made `files_to_watch` contain `nanoc.yaml`, not `config.yaml` by default
+
+## 3.6 (2013-02-24)
+
+Features:
+
+* Added `sync` command, allowing data sources to update local caches of
+  external data [Justin Hileman]
+* Added `#ignore` compiler DSL method
+* Allowed accessing items by identifier using e.g. `@items['/about/']`
+* Added `shell` command
+
+Enhancements:
+
+* Renamed the nanoc configuration file from `config.yaml` to `nanoc.yaml`
+
+Fixes:
+
+* Updated references to old web site and old repository
+* Made `require` errors mention Bundler if appropriate
+* Fixed bug which caused pruner not to delete directories in some cases [@reima]
+* Made `check` command exit with the proper exit status
+* Added support for the `HTML_TOC` Redcarpet renderer
+* Made `stale` check honor files excluded by the pruner
+
+## 3.5 (2013-01-27)
+
+Major changes:
+
+* Added checks
+
+Minor changes:
 
 * Added `#include_rules` for modularising Rules files [Justin Hileman]
 * Replaced FSSM with Listen [Takashi Uchibe]
+* Made USR1 print stack trace (not on Windows)
+* Added ability to configure autocompiler host/port in config.yaml [Stuart Montgomery]
+* Added static data source
+* Added `:rep_select` parameter to XML sitemap to allow filtering reps
+* Removed use of bright/bold colors for compatibility with Solarized
+
+Exensions:
+
+* Added support for parameters in Less filter [Ruben Verborgh]
+* Added support for icon and logo in Atom feed [Ruben Verborgh]
+
+Fixes:
+
+* Made syntax colorizer only use the first non-empty line when extracting the
+  language comment
+* Fixed XSL filter
+
+## 3.4.3 (2012-12-09)
+
+Improvements:
+
+* Item reps are now accessible in a consistent way: in Rules and during
+  compilation, they can be accessed using both `@rep` and `@item_rep`
+
+Fixes:
+
+* Made cleaning streams (stdout/stderr as used by nanoc) compatible with
+  Ruby’s built-in Logger
+* Made prune work when the output directory is a symlink
+* Made Handlebars filter compatible with the latest version
+* Made `show-data` command show more accurate dependencies [Stefan Bühler]
+* Restored compatibility with Sass 3.2.2
+
+## 3.4.2 (2012-11-01)
+
+Fixes:
+
+* Made passthrough rules be inserted in the right place [Gregory Pakosz]
+* Fixed crashes in the progress indicator when compiling
+* Made auto-pruning honor excluded files [Greg Karékinian]
+* Made lack of which/where not crash watch command
+
+Improvements:
+
+* Fixed constant reinitialization warnings [Damien Pollet]
+* Made UTF-8 not be decomposed when outputting to a file from a non-UTF-8 terminal
+* Made syntax colorizer wrap CodeRay output in required CodeRay divs
+* Made fog delete after upload, not before [Go Maeda]
+* Made requesting compiled content of binary item impossible
 
 ## 3.4.1 (2012-09-22)
 
@@ -18,7 +172,7 @@ Improvements:
 * Added prune configuration to config.yaml
 * Made nanoc check for presence of nanoc in Gemfile
 * Made compile command not show identicals (use `--verbose` if you want them)
-* Made relativize_paths filter recognise more paths to relativize [Arnau Siches]
+* Made `relativize_paths` filter recognise more paths to relativize [Arnau Siches]
 * Fixed #passthrough for items without extensions [Justin Hileman]
 * Added more IO/File proxy methods to cleaning streams
 
@@ -106,7 +260,7 @@ Extensions:
 * Made data source configuration location a bit more obvious
 * Fixed watch command under Windows
 * Made filesystem data source ignore UTF-8 BOM
-* Improved compatibility of colorize_syntax filter with older libxml versions
+* Improved compatibility of `colorize_syntax` filter with older libxml versions
 
 ## 3.2.3 (2011-10-31)
 
@@ -118,7 +272,7 @@ Extensions:
 ## 3.2.2 (2011-09-04)
 
 * Fixed command usage printing
-* Made relativize_paths filter handle Windows network paths [Ruben Verborgh]
+* Made `relativize_paths` filter handle Windows network paths [Ruben Verborgh]
 * Made watcher use correct configuration
 * Allowed code blocks to start with a non-language shebang line
 
@@ -159,7 +313,7 @@ Extensions:
 
 * Really fixed dependency generation between Sass partials this time
 * Updated Less filter to 2.0
-* Made colorize_syntax filter throw an error if pygmentize is not available
+* Made `colorize_syntax` filter throw an error if pygmentize is not available
 
 ## 3.1.8 (2011-06-25)
 
@@ -256,10 +410,10 @@ Deprecated:
 
 ## 3.0.8 (2010-02-24)
 
-* `#atom_tag_for` now works with base_urls that contain a path [Eric Sunshine]
+* `#atom_tag_for` now works with `base_url`s that contain a path [Eric Sunshine]
 * Generated root URLs in `#atom_feed` now end with a slash [Eric Sunshine]
 * Autocompiler now recognises requests to index files
-* `Blogging` helper now allows created_at to be a Time instance
+* `Blogging` helper now allows `created_at` to be a Time instance
 
 ## 3.0.7 (2010-01-29)
 

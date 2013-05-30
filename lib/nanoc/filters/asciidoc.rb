@@ -1,11 +1,13 @@
 # encoding: utf-8
 
-require 'systemu'
-
 module Nanoc::Filters
 
   # @since 3.2.0
   class AsciiDoc < Nanoc::Filter
+
+    identifier :asciidoc
+
+    requires 'systemu'
 
     # Runs the content through [AsciiDoc](http://www.methods.co.nz/asciidoc/).
     # This method takes no options.

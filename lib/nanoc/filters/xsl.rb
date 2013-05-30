@@ -1,10 +1,13 @@
 # encoding: utf-8
-require 'nokogiri'
 
 module Nanoc::Filters
 
   # @since 3.3.0
   class XSL < Nanoc::Filter
+
+    identifier :xsl
+
+    requires 'nokogiri'
 
     # Runs the item content through an [XSLT](http://www.w3.org/TR/xslt) 
     # stylesheet using  [Nokogiri](http://nokogiri.org/).
@@ -35,8 +38,8 @@ module Nanoc::Filters
         raise "The XSL filter can only be run as a layout"
       end
 
-      xml = ::Nokogiri::XML(content)
-      xsl = ::Nokogiri::XSLT(assigns[:content])
+      xml = ::Nokogiri::XML(content.string)
+      xsl = ::Nokogiri::XSLT(assigns[:layout].content.string)
 
       xsl.transform(xml, ::Nokogiri::XSLT.quote_params(params)).to_s
     end

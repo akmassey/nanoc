@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::ItemTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::ItemTest < Nanoc::TestCase
 
   def test_initialize_with_attributes_with_string_keys
     item = Nanoc::Item.new("foo", { 'abc' => 'xyz' }, '/foo/')
@@ -11,23 +9,24 @@ class Nanoc::ItemTest < MiniTest::Unit::TestCase
     assert_equal 'xyz', item.attributes[:abc]
   end
 
-  def test_initialize_with_unclean_identifier
-    item = Nanoc::Item.new("foo", {}, '/foo')
+  def test_initialize_without_content
+    error = assert_raises ArgumentError do
+      Nanoc::Item.new(nil, {}, '/foo.md')
+    end
 
-    assert_equal '/foo/', item.identifier
+    assert_equal 'Attempted to create a Nanoc::Item without content (identifier /foo.md)', error.message
   end
 
   def test_frozen_identifier
     item = Nanoc::Item.new("foo", {}, '/foo')
 
-    raised = false
-    begin
-      item.identifier.chop!
-    rescue => error
-      raised = true
-      assert_match /(^can't modify frozen [Ss]tring|^unable to modify frozen object$)/, error.message
+    assert_raises_frozen_error do
+      item.identifier.components << 'blah'
     end
-    assert raised, 'Should have raised when trying to modify a frozen string'
+
+    assert_raises_frozen_error do
+      item.identifier.components[0] << 'blah'
+    end
   end
 
   def test_lookup
@@ -35,7 +34,7 @@ class Nanoc::ItemTest < MiniTest::Unit::TestCase
     item = Nanoc::Item.new(
       "content",
       { :one => 'one in item' },
-      '/path/'
+      '/path.md'
     )
 
     # Test finding one
@@ -141,38 +140,28 @@ class Nanoc::ItemTest < MiniTest::Unit::TestCase
   end
 
   def test_freeze_should_disallow_changes
-    item = Nanoc::Item.new("foo", { :a => { :b => 123 }}, '/foo/')
+    item = Nanoc::Item.new("foo", { :a => { :b => 123 }}, '/foo')
     item.freeze
 
-    raised = false
-    begin
+    assert_raises_frozen_error do
       item[:abc] = '123'
-    rescue => e
-      raised = true
-      assert_match /(^can't modify frozen |^unable to modify frozen object$)/, e.message
     end
-    assert raised
 
-    raised = false
-    begin
+    assert_raises_frozen_error do
       item[:a][:b] = '456'
-    rescue => e
-      raised = true
-      assert_match /(^can't modify frozen |^unable to modify frozen object$)/, e.message
     end
-    assert raised
   end
 
   def test_dump_and_load
     item = Nanoc::Item.new(
-      "foobar",
+      Nanoc::TextualContent.new('foobar', File.absolute_path('content/blah.md')),
       { :a => { :b => 123 }},
-      '/foo/')
+      '/foo')
 
     item = Marshal.load(Marshal.dump(item))
 
-    assert_equal '/foo/', item.identifier
-    assert_equal 'foobar', item.raw_content
+    assert_equal '/foo', item.identifier.to_s
+    assert_equal 'foobar', item.content.string
     assert_equal({ :a => { :b => 123 }}, item.attributes)
   end
 

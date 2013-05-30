@@ -84,6 +84,11 @@ module Nanoc::CLI
       @stream.reopen(*a)
     end
 
+    # @see IO#close
+    def close
+      @stream.close
+    end
+
     # @see File#exist?
     def exist?
       @stream.exist?
@@ -92,6 +97,16 @@ module Nanoc::CLI
     # @see File.exists?
     def exists?
       @stream.exists?
+    end
+
+    # @see IO.winsize
+    def winsize
+      @stream.winsize
+    end
+
+    # @see IO.winsize=
+    def winsize=(arg)
+      @stream.winsize=(arg)
     end
 
   protected

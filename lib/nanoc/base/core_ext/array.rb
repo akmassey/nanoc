@@ -3,24 +3,26 @@
 module Nanoc::ArrayExtensions
 
   # Returns a new array where all items' keys are recursively converted to
-  # symbols by calling {Nanoc::ArrayExtensions#symbolize_keys} or
-  # {Nanoc::HashExtensions#symbolize_keys}.
+  # symbols by calling {Nanoc::ArrayExtensions#symbolize_keys_recursively} or
+  # {Nanoc::HashExtensions#symbolize_keys_recursively}.
   #
   # @return [Array] The converted array
-  def symbolize_keys
-    inject([]) do |array, element|
-      array + [ element.respond_to?(:symbolize_keys) ? element.symbolize_keys : element ]
+  def symbolize_keys_recursively
+    array = []
+    self.each do |element|
+      array << (element.respond_to?(:symbolize_keys_recursively) ? element.symbolize_keys_recursively : element)
     end
+    array
   end
 
   # Returns a new array where all items' keys are recursively converted to
-  # strings by calling {Nanoc::ArrayExtensions#stringify_keys} or
-  # {Nanoc::HashExtensions#stringify_keys}.
+  # strings by calling {Nanoc::ArrayExtensions#stringify_keys_recursively} or
+  # {Nanoc::HashExtensions#stringify_keys_recursively}.
   #
   # @return [Array] The converted array
-  def stringify_keys
+  def stringify_keys_recursively
     inject([]) do |array, element|
-      array + [ element.respond_to?(:stringify_keys) ? element.stringify_keys : element ]
+      array + [ element.respond_to?(:stringify_keys_recursively) ? element.stringify_keys_recursively : element ]
     end
   end
 

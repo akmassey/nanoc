@@ -1,11 +1,11 @@
 # encoding: utf-8
 
-require 'nokogiri'
-require 'stringio'
-require 'open3'
-
 module Nanoc::Filters
   class ColorizeSyntax < Nanoc::Filter
+
+    identifier :colorize_syntax
+
+    requires 'nokogiri', 'stringio', 'open3'
 
     # The default colorizer to use for a language if the colorizer for that
     # language is not overridden.
@@ -117,7 +117,7 @@ module Nanoc::Filters
           has_class = true if language
         else
           # Get language from comment line
-          match = element.inner_text.match(/^#!([^\/][^\n]*)$/)
+          match = element.inner_text.strip.split[0].match(/^#!([^\/][^\n]*)$/)
           language = match[1] if match
           element.content = element.content.sub(/^#!([^\/][^\n]*)$\n/, '') if language
         end
@@ -275,10 +275,6 @@ module Nanoc::Filters
       stdout.read
     end
 
-  protected
-
-    KNOWN_COLORIZERS = [ :coderay, :dummy, :pygmentize, :pygmentsrb, :simon_highlight ]
-
     # Wraps the element in <div class="CodeRay"><div class="code">
     def coderay_postprocess(language, element)
       # Skip if we're a free <code>
@@ -297,6 +293,10 @@ module Nanoc::Filters
       # orig element
       element.swap div_outer
     end
+
+  protected
+
+    KNOWN_COLORIZERS = [ :coderay, :dummy, :pygmentize, :pygmentsrb, :simon_highlight ]
 
     # Removes the first blank lines and any whitespace at the end.
     def strip(s)

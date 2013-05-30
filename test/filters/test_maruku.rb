@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::Filters::MarukuTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::Filters::MarukuTest < Nanoc::TestCase
 
   def test_filter
     if_have 'maruku' do
@@ -10,7 +8,7 @@ class Nanoc::Filters::MarukuTest < MiniTest::Unit::TestCase
       filter = ::Nanoc::Filters::Maruku.new
 
       # Run filter
-      result = filter.run("This is _so_ *cool*!")
+      result = filter.setup_and_run("This is _so_ *cool*!")
       assert_equal("<p>This is <em>so</em> <em>cool</em>!</p>", result)
     end
   end

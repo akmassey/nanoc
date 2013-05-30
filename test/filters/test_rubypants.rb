@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::Filters::RubyPantsTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::Filters::RubyPantsTest < Nanoc::TestCase
 
   def test_filter
     if_have 'rubypants' do
@@ -10,7 +8,7 @@ class Nanoc::Filters::RubyPantsTest < MiniTest::Unit::TestCase
       filter = ::Nanoc::Filters::RubyPants.new
 
       # Run filter
-      result = filter.run("Wait---what?")
+      result = filter.setup_and_run("Wait---what?")
       assert_equal("Wait&#8212;what?", result)
     end
   end

@@ -15,24 +15,16 @@ module Nanoc::Helpers
     # @return [Array] The breadcrumbs, starting with the root item and ending
     #   with the item itself
     def breadcrumbs_trail
-      breadcrumbs_for_identifier(@item.identifier)
-    end
+      trail      = []
 
-    def item_with_identifier(identifier)
-      @identifier_cache ||= {}
-      @identifier_cache[identifier] ||= begin
-        @items.find { |i| i.identifier == identifier }
+      identifier = @item.identifier
+      loop do
+        trail.unshift(@items[identifier])
+        identifier = identifier.parent
+        break if identifier.nil?
       end
-    end
 
-    def breadcrumbs_for_identifier(identifier)
-      @breadcrumbs_cache ||= {}
-      @breadcrumbs_cache[identifier] ||= begin
-        head = (identifier == '/' ? [] :  breadcrumbs_for_identifier(identifier.sub(/[^\/]+\/$/, '')) )
-        tail = [ item_with_identifier(identifier) ]
-
-        head + tail
-      end
+      trail
     end
 
   end

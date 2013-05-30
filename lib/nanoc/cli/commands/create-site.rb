@@ -4,7 +4,7 @@ usage       'create-site [options] path'
 aliases     :create_site, :cs
 summary     'create a site'
 description <<-EOS
-Create a new site at the given path. The site will use the filesystem_unified data source by default, but this can be changed using the --datasource commandline option.
+Create a new site at the given path. The site will use the `filesystem` data source by default, but this can be changed using the `--datasource` commandline option.
 EOS
 
 required :d, :datasource, 'specify the data source for the new site'
@@ -24,12 +24,7 @@ module Nanoc::CLI::Commands
 
     end
 
-    DEFAULT_CONFIG = <<EOS
-# A list of file extensions that nanoc will consider to be textual rather than
-# binary. If an item with an extension not in this list is found,  the file
-# will be considered as binary.
-text_extensions: #{array_to_yaml(Nanoc::Site::DEFAULT_CONFIG[:text_extensions])}
-
+    DEFAULT_CONFIG = <<EOS unless defined? DEFAULT_CONFIG
 # The path to the directory where all generated files will be written to. This
 # can be an absolute path starting with a slash, but it can also be path
 # relative to the site directory.
@@ -63,7 +58,7 @@ prune:
 data_sources:
   -
     # The type is the identifier of the data source. By default, this will be
-    # `filesystem_unified`.
+    # `filesystem`.
     type: #{Nanoc::Site::DEFAULT_DATA_SOURCE_CONFIG[:type]}
 
     # The path where items should be mounted (comparable to mount points in
@@ -77,80 +72,61 @@ data_sources:
     # same as the items root, but applies to layouts rather than items.
     layouts_root: #{Nanoc::Site::DEFAULT_DATA_SOURCE_CONFIG[:layouts_root]}
 
-    # Whether to allow periods in identifiers. When turned off, everything
-    # past the first period is considered to be the extension, and when
-    # turned on, only the characters past the last period are considered to
-    # be the extension. For example,  a file named “content/about.html.erb”
-    # will have the identifier “/about/” when turned off, but when turned on
-    # it will become “/about.html/” instead.
-    allow_periods_in_identifiers: false
+    # The encoding to use for input files. If your input files are not in
+    # UTF-8 (which they should be!), change this.
+    encoding: utf-8
 
-# Configuration for the “watch” command, which watches a site for changes and
-# recompiles if necessary.
-watcher:
-  # A list of directories to watch for changes. When editing this, make sure
-  # that the “output/” and “tmp/” directories are _not_ included in this list,
-  # because recompiling the site will cause these directories to change, which
-  # will cause the site to be recompiled, which will cause these directories
-  # to change, which will cause the site to be recompiled again, and so on.
-  dirs_to_watch: [ 'content', 'layouts', 'lib' ]
+    # A list of file extensions that nanoc will consider to be textual rather
+    # than binary. If an item with an extension not in this list is found,
+    # the file will be considered as binary.
+    text_extensions: #{array_to_yaml(Nanoc::Site::DEFAULT_DATA_SOURCE_CONFIG[:text_extensions])}
 
-  # A list of single files to watch for changes. As mentioned above, don’t put
-  # any files from the “output/” or “tmp/” directories in here.
-  files_to_watch: [ 'config.yaml', 'Rules' ]
-
-  # When to send notifications (using Growl or notify-send).
-  notify_on_compilation_success: true
-  notify_on_compilation_failure: true
+# Configuration for the “check” command, which run unit tests on the site.
+checks:
+  # Configuration for the “internal_links” checker, which checks whether all
+  # internal links are valid.
+  internal_links:
+    # A list of patterns, specified as regular expressions, to exclude from the check.
+    # If an internal link matches this pattern, the validity check will be skipped.
+    # E.g.:
+    #   exclude: ['^/server_status']
+    exclude: []
 EOS
 
-    DEFAULT_RULES = <<EOS
+    DEFAULT_RULES = <<EOS unless defined? DEFAULT_RULES
 #!/usr/bin/env ruby
 
-# A few helpful tips about the Rules file:
-#
-# * The string given to #compile and #route are matching patterns for
-#   identifiers--not for paths. Therefore, you can’t match on extension.
-#
-# * The order of rules is important: for each item, only the first matching
-#   rule is applied.
-#
-# * Item identifiers start and end with a slash (e.g. “/about/” for the file
-#   “content/about.html”). To select all children, grandchildren, … of an
-#   item, use the pattern “/about/*/”; “/about/*” will also select the parent,
-#   because “*” matches zero or more characters.
-
-compile '/stylesheet/' do
+compile '/stylesheet.*' do
   # don’t filter or layout
 end
 
-compile '*' do
+compile '/**/*' do
   if item.binary?
     # don’t filter binary items
   else
     filter :erb
-    layout 'default'
+    layout '/default.html'
   end
 end
 
-route '/stylesheet/' do
+route '/stylesheet.*' do
   '/style.css'
 end
 
-route '*' do
+route '/**/*' do
   if item.binary?
-    # Write item with identifier /foo/ to /foo.ext
-    item.identifier.chop + '.' + item[:extension]
+    # Write item with identifier /foo.ext to /foo.ext
+    item.identifier
   else
-    # Write item with identifier /foo/ to /foo/index.html
-    item.identifier + 'index.html'
+    # Write item with identifier /foo.ext to /foo/index.html
+    item.identifier.in_dir.with_ext('html')
   end
 end
 
-layout '*', :erb
+layout '/**/*', :erb
 EOS
 
-    DEFAULT_ITEM = <<EOS
+    DEFAULT_ITEM = <<EOS unless defined? DEFAULT_ITEM
 <h1>A Brand New nanoc Site</h1>
 
 <p>You’ve just created a new nanoc site. The page you are looking at right now is the home page for your site. To get started, consider replacing this default homepage with your own customized homepage. Some pointers on how to do so:</p>
@@ -163,7 +139,7 @@ EOS
 <p>If you need any help with customizing your nanoc web site, be sure to check out the documentation (see sidebar), and be sure to subscribe to the discussion group (also see sidebar). Enjoy!</p>
 EOS
 
-    DEFAULT_STYLESHEET = <<EOS
+    DEFAULT_STYLESHEET = <<EOS unless defined? DEFAULT_STYLESHEET
 * {
   margin: 0;
   padding: 0;
@@ -208,9 +184,9 @@ a:hover {
 
 #main p {
   margin: 20px 0;
-  
+
   font-size: 15px;
-  
+
   line-height: 20px;
 }
 
@@ -220,7 +196,7 @@ a:hover {
 
 #main li {
   font-size: 15px;
-  
+
   line-height: 20px;
 }
 
@@ -267,7 +243,7 @@ a:hover {
 }
 EOS
 
-    DEFAULT_LAYOUT = <<EOS
+    DEFAULT_LAYOUT = <<EOS unless defined? DEFAULT_LAYOUT
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
@@ -285,14 +261,14 @@ EOS
     <div id="sidebar">
       <h2>Documentation</h2>
       <ul>
-        <li><a href="http://nanoc.stoneship.org/docs/">Documentation</a></li>
-        <li><a href="http://nanoc.stoneship.org/docs/3-getting-started/">Getting Started</a></li>
+        <li><a href="http://nanoc.ws/docs/">Documentation</a></li>
+        <li><a href="http://nanoc.ws/docs/tutorial/">Getting Started</a></li>
       </ul>
       <h2>Community</h2>
       <ul>
         <li><a href="http://groups.google.com/group/nanoc/">Discussion Group</a></li>
         <li><a href="irc://chat.freenode.net/#nanoc">IRC Channel</a></li>
-        <li><a href="http://projects.stoneship.org/trac/nanoc/">Wiki</a></li>
+        <li><a href="http://github.com/nanoc/nanoc/wiki/">Wiki</a></li>
       </ul>
     </div>
   </body>
@@ -307,7 +283,7 @@ EOS
 
       # Extract arguments and options
       path        = arguments[0]
-      data_source = options[:datasource] || 'filesystem_unified'
+      data_source = options.fetch(:datasource, 'filesystem')
 
       # Check whether site exists
       if File.exist?(path)
@@ -337,15 +313,15 @@ EOS
 
   protected
 
-    # Creates a configuration file and a output directory for this site, as
-    # well as a rakefile that loads the standard nanoc tasks.
+    # Creates a minimal site, i.e. a directory with only the bare
+    # essentials to qualify as a nanoc site.
     def site_create_minimal(data_source)
       # Create output
       FileUtils.mkdir_p('output')
 
       # Create config
-      File.open('config.yaml', 'w') { |io| io.write(DEFAULT_CONFIG) }
-      Nanoc::NotificationCenter.post(:file_created, 'config.yaml')
+      File.open('nanoc.yaml', 'w') { |io| io.write(DEFAULT_CONFIG) }
+      Nanoc::NotificationCenter.post(:file_created, 'nanoc.yaml')
 
       # Create rules
       File.open('Rules', 'w') do |io|
@@ -377,22 +353,21 @@ EOS
       data_source.create_item(
         DEFAULT_ITEM,
         { :title => "Home" },
-        '/'
+        '/index.html'
       )
 
       # Create stylesheet
       data_source.create_item(
         DEFAULT_STYLESHEET,
         {},
-        '/stylesheet/',
-        :extension => '.css'
+        '/stylesheet.css'
       )
 
       # Create layout
       data_source.create_layout(
         DEFAULT_LAYOUT,
         {},
-        '/default/'
+        '/default.html'
       )
 
       # Create code

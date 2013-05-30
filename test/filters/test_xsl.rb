@@ -2,11 +2,10 @@
 
 require 'tempfile'
 
-class Nanoc::Filters::XSLTest < MiniTest::Unit::TestCase
+class Nanoc::Filters::XSLTest < Nanoc::TestCase
 
-  include Nanoc::TestHelpers
-
-  SAMPLE_XSL = <<-EOS
+  def sample_xsl
+    <<-EOS
 <?xml version="1.0" encoding="utf-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" version="1.0" encoding="utf-8" indent="yes"/>
@@ -22,15 +21,19 @@ class Nanoc::Filters::XSLTest < MiniTest::Unit::TestCase
   </xsl:template>
 </xsl:stylesheet>
 EOS
+  end
 
-  SAMPLE_XML_IN = <<-EOS
+  def sample_xml_in
+    Nanoc::TextualContent.new(<<-EOS, File.absolute_path('content/foo.xml'))
 <?xml version="1.0" encoding="utf-8"?>
 <report>
   <title>My Report</title>
 </report>
 EOS
+  end
 
-  SAMPLE_XML_OUT = <<-EOS
+  def sample_xml_out
+    <<-EOS
 <?xml version="1.0" encoding="utf-8"?>
 <html>
   <head>
@@ -41,8 +44,10 @@ EOS
   </body>
 </html>
 EOS
+  end
 
-  SAMPLE_XSL_WITH_PARAMS = <<-EOS
+  def sample_xsl_with_params
+    <<-EOS
 <?xml version="1.0" encoding="utf-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="xml" version="1.0" encoding="utf-8" indent="yes"/>
@@ -58,15 +63,19 @@ EOS
   </xsl:template>
 </xsl:stylesheet>
 EOS
+  end
 
-  SAMPLE_XML_IN_WITH_PARAMS = <<-EOS
+  def sample_xml_in_with_params
+    Nanoc::TextualContent.new(<<-EOS, File.absolute_path('content/foo.xml'))
 <?xml version="1.0" encoding="utf-8"?>
 <report>
   <title>My Report</title>
 </report>
 EOS
+  end
 
-  SAMPLE_XML_OUT_WITH_PARAMS = <<-EOS
+  def sample_xml_out_with_params
+    <<-EOS
 <?xml version="1.0" encoding="utf-8"?>
 <html>
   <head>
@@ -77,28 +86,27 @@ EOS
   </body>
 </html>
 EOS
+  end
 
   def test_filter_as_layout
     if_have 'nokogiri' do
-      layout = Nanoc::Layout.new(SAMPLE_XSL, {}, '/layout/')
+      layout = Nanoc::Layout.new(self.sample_xsl, {}, '/layout/')
 
-      filter = ::Nanoc::Filters::XSL.new(
-        :layout => layout, :content => SAMPLE_XSL)
-      result = filter.run(SAMPLE_XML_IN)
+      filter = ::Nanoc::Filters::XSL.new(:layout => layout)
+      result = filter.setup_and_run(self.sample_xml_in)
 
-      assert_equal SAMPLE_XML_OUT, result
+      assert_equal self.sample_xml_out, result
     end
   end
 
   def test_filter_with_params
     if_have 'nokogiri' do
-      layout = Nanoc::Layout.new(SAMPLE_XSL_WITH_PARAMS, {}, '/layout/')
+      layout = Nanoc::Layout.new(self.sample_xsl_with_params, {}, '/layout/')
 
-      filter = ::Nanoc::Filters::XSL.new(
-        :layout => layout, :content => SAMPLE_XSL_WITH_PARAMS)
-      result = filter.run(SAMPLE_XML_IN_WITH_PARAMS, :foo => 'bar')
+      filter = ::Nanoc::Filters::XSL.new(:layout => layout)
+      result = filter.setup_and_run(self.sample_xml_in_with_params, :foo => 'bar')
 
-      assert_equal SAMPLE_XML_OUT_WITH_PARAMS, result
+      assert_equal self.sample_xml_out_with_params, result
     end
   end
 

@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::ChecksumStoreTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::ChecksumStoreTest < Nanoc::TestCase
 
   def test_get_with_existing_object
     require 'pstore'
@@ -11,14 +9,14 @@ class Nanoc::ChecksumStoreTest < MiniTest::Unit::TestCase
     FileUtils.mkdir_p('tmp')
     pstore = PStore.new('tmp/checksums')
     pstore.transaction do
-      pstore[:data] = { [ :item, '/moo/' ] => 'zomg' }
+      pstore[:data] = { [ :item, Nanoc::Identifier.from_string('/moo.md') ] => 'zomg' }
       pstore[:version] = 1
     end
 
     # Check
     store = Nanoc::ChecksumStore.new
     store.load
-    obj = Nanoc::Item.new('Moo?', {}, '/moo/')
+    obj = Nanoc::Item.new('Moo?', {}, '/moo.md')
     assert_equal 'zomg', store[obj]
   end
 
@@ -27,8 +25,7 @@ class Nanoc::ChecksumStoreTest < MiniTest::Unit::TestCase
     store.load
 
     # Check
-    obj = Nanoc::Item.new('Moo?', {}, '/animals/cow/')
-    new_checksum = 'Moo?'.checksum + '-' + {}.checksum
+    obj = Nanoc::Item.new('Moo?', {}, '/animals/cow.md')
     assert_equal nil, store[obj]
   end
 

@@ -13,16 +13,16 @@ module Nanoc::CLI
   module Commands
   end
 
-  autoload 'ANSIStringColorizer', 'nanoc/cli/ansi_string_colorizer'
-  autoload 'Logger',              'nanoc/cli/logger'
-  autoload 'CommandRunner',       'nanoc/cli/command_runner'
-  autoload 'CleaningStream',      'nanoc/cli/cleaning_stream'
-  autoload 'StreamCleaners',      'nanoc/cli/stream_cleaners'
-  autoload 'ErrorHandler',        'nanoc/cli/error_handler'
+end
 
-  # Deprecated; use CommandRunner instead
-  # TODO [in nanoc 4.0] remove me
-  autoload 'Command',             'nanoc/cli/command_runner'
+require 'nanoc/cli/ansi_string_colorizer'
+require 'nanoc/cli/logger'
+require 'nanoc/cli/command_runner'
+require 'nanoc/cli/cleaning_stream'
+require 'nanoc/cli/stream_cleaners'
+require 'nanoc/cli/error_handler'
+
+module Nanoc::CLI
 
   # @return [Boolean] true if debug output is enabled, false if not
   #
@@ -49,9 +49,13 @@ module Nanoc::CLI
   def self.run(args)
     Nanoc::CLI::ErrorHandler.handle_while do
       self.setup
-      self.load_custom_commands
       self.root_command.run(args)
     end
+  end
+
+  # @return [Cri::Command] The root command, i.e. the commandline tool itself
+  def self.root_command
+    @root_command
   end
 
   # Adds the given command to the collection of available commands.
@@ -65,15 +69,25 @@ module Nanoc::CLI
 
 protected
 
-  # Makes the commandline interface ready for using by loading the commands.
+  # Makes the commandline interface ready for use.
   #
   # @return [void]
   def self.setup
-    # Set up output streams
     self.setup_cleaning_streams
+    self.setup_commands
+    self.load_custom_commands
+  end
 
+  # Sets up the root command and base subcommands.
+  #
+  # @return [void]
+  def self.setup_commands
     # Reinit
     @root_command = nil
+
+    # Add root command
+    filename = File.dirname(__FILE__) + "/cli/commands/nanoc.rb"
+    @root_command = self.load_command_at(filename)
 
     # Add help command
     help_cmd = Cri::Command.new_basic_help
@@ -88,7 +102,7 @@ protected
     end
   end
 
-  # Loads the commands in `commands/`.
+  # Loads site-specific commands in `commands/`.
   #
   # @return [void]
   def self.load_custom_commands
@@ -128,14 +142,6 @@ protected
 
     # Done
     cmd
-  end
-
-  # @return [Cri::Command] The root command, i.e. the commandline tool itself
-  def self.root_command
-    @root_command ||= begin
-      filename = File.dirname(__FILE__) + "/cli/commands/nanoc.rb"
-      self.load_command_at(filename)
-    end
   end
 
   # @return [Array] The directory contents

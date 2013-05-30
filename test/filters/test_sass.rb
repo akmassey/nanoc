@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
-
-  include Nanoc::TestHelpers
+class Nanoc::Filters::SassTest < Nanoc::TestCase
 
   def test_filter
     if_have 'sass' do
@@ -10,7 +8,7 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
       filter = create_filter({ :foo => 'bar' })
 
       # Run filter
-      result = filter.run(".foo #bar\n  color: #f00")
+      result = filter.setup_and_run(".foo #bar\n  color: #f00")
       assert_match(/.foo\s+#bar\s*\{\s*color:\s+(red|#f00);?\s*\}/, result)
     end
   end
@@ -21,12 +19,12 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
       filter = create_filter({ :foo => 'bar' })
 
       # Check with compact
-      result = filter.run(".foo #bar\n  color: #f00", :style => 'compact')
-      assert_match(/^\.foo #bar[\s\n]*\{[\s\n]*color:\s*(red|#f00);?[\s\n]*\}/m, result)
+      result = filter.setup_and_run(".foo #bar\n  color: #f00", :style => 'compact')
+      assert_match(/^\.foo #bar[\s]*\{[\s]*color:\s*(red|#f00);?[\s]*\}/m, result)
 
       # Check with compressed
-      result = filter.run(".foo #bar\n  color: #f00", :style => 'compressed')
-      assert_match(/^\.foo #bar[\s\n]*\{[\s\n]*color:\s*(red|#f00);?[\s\n]*\}/m, result)
+      result = filter.setup_and_run(".foo #bar\n  color: #f00", :style => 'compressed')
+      assert_match(/^\.foo #bar[\s]*\{[\s]*color:\s*(red|#f00);?[\s]*\}/m, result)
     end
   end
 
@@ -38,7 +36,7 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
       # Run filter
       raised = false
       begin
-        filter.run('$*#&!@($')
+        filter.setup_and_run('$*#&!@($')
       rescue Sass::SyntaxError => e
         assert_match ':1', e.backtrace[0]
         raised = true
@@ -56,7 +54,7 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
       File.open('moo.sass', 'w') { |io| io.write "body\n  color: red" }
 
       # Run filter
-      filter.run('@import moo')
+      filter.setup_and_run('@import moo')
     end
   end
 
@@ -71,7 +69,7 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
       File.open('subdir/relative.sass', 'w') { |io| io.write "body\n  color: red" }
 
       # Run filter
-      filter.run('@import moo')
+      filter.setup_and_run('@import moo')
     end
   end
 
@@ -84,7 +82,7 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
       File.open('moo.sass', 'w') { |io| io.write "body\n  color: red" }
 
       # Run filter
-      filter.run('@import moo')
+      filter.setup_and_run('@import moo')
     end
   end
 
@@ -94,7 +92,7 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
       filter = create_filter
 
       # Run filter
-      filter.run('@import moo.css')
+      filter.setup_and_run('@import moo.css')
     end
   end
 
@@ -112,15 +110,15 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
 
         # Update rules
         File.open('Rules', 'w') do |io|
-          io.write "compile '*' do\n"
+          io.write "compile '/**/*' do\n"
           io.write "  filter :sass\n"
           io.write "end\n"
           io.write "\n"
-          io.write "route '/a/' do\n"
-          io.write "  item.identifier.chop + '.css'\n"
+          io.write "route '/a.*' do\n"
+          io.write "  item.identifier.with_ext('css')\n"
           io.write "end\n"
           io.write "\n"
-          io.write "route '/b/' do\n"
+          io.write "route '/b.*' do\n"
           io.write "  nil\n"
           io.write "end\n"
         end
@@ -133,8 +131,7 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
         assert Dir['output/*'].size == 1
         assert File.file?('output/a.css')
         refute File.file?('output/b.css')
-        assert_match /^p\s*\{\s*color:\s*red;?\s*\}/,
-          File.read('output/a.css')
+        assert_match(/^p\s*\{\s*color:\s*red;?\s*\}/, File.read('output/a.css'))
 
         # Update included file
         File.open('content/b.sass', 'w') do |io|
@@ -149,8 +146,7 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
         assert Dir['output/*'].size == 1
         assert File.file?('output/a.css')
         refute File.file?('output/b.css')
-        assert_match /^p\s*\{\s*color:\s*blue;?\s*\}/,
-          File.read('output/a.css')
+        assert_match(/^p\s*\{\s*color:\s*blue;?\s*\}/, File.read('output/a.css'))
       end
     end
   end
@@ -169,15 +165,15 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
 
         # Update rules
         File.open('Rules', 'w') do |io|
-          io.write "compile '*' do\n"
+          io.write "compile '/**/*' do\n"
           io.write "  filter :sass\n"
           io.write "end\n"
           io.write "\n"
-          io.write "route '/a/' do\n"
-          io.write "  item.identifier.chop + '.css'\n"
+          io.write "route '/a.sass' do\n"
+          io.write "  item.identifier.with_ext('css')\n"
           io.write "end\n"
           io.write "\n"
-          io.write "route '/_b/' do\n"
+          io.write "route '/_b.sass' do\n"
           io.write "  nil\n"
           io.write "end\n"
         end
@@ -190,8 +186,7 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
         assert Dir['output/*'].size == 1
         assert File.file?('output/a.css')
         refute File.file?('output/b.css')
-        assert_match /^p\s*\{\s*color:\s*red;?\s*\}/,
-          File.read('output/a.css')
+        assert_match(/^p\s*\{\s*color:\s*red;?\s*\}/, File.read('output/a.css'))
 
         # Update included file
         File.open('content/_b.sass', 'w') do |io|
@@ -206,8 +201,7 @@ class Nanoc::Filters::SassTest < MiniTest::Unit::TestCase
         assert Dir['output/*'].size == 1
         assert File.file?('output/a.css')
         refute File.file?('output/b.css')
-        assert_match /^p\s*\{\s*color:\s*blue;?\s*\}/,
-          File.read('output/a.css')
+        assert_match(/^p\s*\{\s*color:\s*blue;?\s*\}/, File.read('output/a.css'))
       end
     end
   end
@@ -216,12 +210,11 @@ private
 
   def create_filter(params={})
     FileUtils.mkdir_p('content')
-    File.open('content/xyzzy.sass', 'w') { |io| io.write('p\n  color: green')}
+    File.open('content/blah.sass', 'w') { |io| io.write('p\n  color: green')}
 
-    items = [ Nanoc::Item.new(
-      'blah',
-      { :content_filename => 'content/xyzzy.sass' },
-      '/blah/') ]
+    item = Nanoc::Item.new(Nanoc::TextualContent.new('blah', File.absolute_path('content/blah.sass')), {}, '/blah.sass')
+
+    items = [ item ]
     params = { :item => items[0], :items => items }.merge(params)
     ::Nanoc::Filters::Sass.new(params)
   end
